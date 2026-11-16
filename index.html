@@ -5,81 +5,74 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ConectLab EB104 – Laboratorul de Sisteme Conectate · UPB</title>
 <link rel="icon" type="image/svg+xml" href="assets/conectlab-simbol.svg">
-<meta name="description" content="ConectLab EB104 – Laboratorul de Sisteme Conectate, Facultatea de Inginerie Electrică, UPB. Conectăm echipamente. Conectăm oameni.">
+<link rel="alternate" hreflang="ro" href="https://conectlab-upb.github.io/">
+<link rel="alternate" hreflang="en" href="https://conectlab-upb.github.io/en/">
+<meta name="description" content="ConectLab EB104 – Laboratorul de Sisteme Conectate, UPB. IIoT pentru ingineria electrică și IoMT pentru monitorizare medicală. Conectăm echipamente. Conectăm oameni.">
 <style>
-  :root{
-    --bg:#0b1220; --bg2:#101a2e; --card:#14203a; --line:#22324f;
-    --txt:#e8eef8; --mut:#9fb0c8; --acc:#14b8a6; --acc2:#ffb547; --acc3:#6aa8ff;
-    --r:16px;
-  }
+  :root{--bg:#0b1220;--bg2:#101a2e;--card:#14203a;--line:#22324f;--txt:#e8eef8;--mut:#9fb0c8;--acc:#14b8a6;--acc2:#ffb547;--acc3:#6aa8ff;--r:16px}
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.6}
   a{color:var(--acc);text-decoration:none}
   .wrap{max-width:1140px;margin:0 auto;padding:0 22px}
-
-  /* NAV */
-  nav{position:sticky;top:0;z-index:20;background:rgba(11,18,32,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;color:var(--txt)}
+  nav{position:sticky;top:0;z-index:20;background:rgba(11,18,32,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.12rem;color:var(--txt)}
   .logo b{color:var(--acc)}
-  .logo svg{width:46px;height:30px}
-  nav ul{display:flex;gap:22px;list-style:none}
+  .logo svg{width:52px;height:34px}
+  nav ul{display:flex;gap:22px;list-style:none;align-items:center}
   nav ul a{color:var(--mut);font-size:.93rem}
   nav ul a:hover{color:var(--txt)}
-  @media(max-width:760px){nav ul{display:none}}
-
-  /* HERO */
-  .hero{position:relative;overflow:hidden;padding:84px 0 70px;background:radial-gradient(1000px 500px at 80% 10%,rgba(20,184,166,.12),transparent 60%),radial-gradient(800px 400px at 0% 100%,rgba(106,168,255,.10),transparent 60%)}
-  .hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center}
-  @media(max-width:900px){.hero .wrap{grid-template-columns:1fr}}
+  .lang{border:1px solid var(--line);border-radius:8px;padding:2px 10px;font-size:.85rem;color:var(--mut)}
+  .lang b{color:var(--txt)}
+  @media(max-width:820px){nav ul li.s{display:none}}
+  .hero{position:relative;overflow:hidden;padding:76px 0 64px;background:radial-gradient(1000px 500px at 80% 10%,rgba(20,184,166,.12),transparent 60%),radial-gradient(800px 400px at 0% 100%,rgba(106,168,255,.10),transparent 60%)}
+  .hero .wrap{display:grid;grid-template-columns:1fr 1.05fr;gap:36px;align-items:center}
+  @media(max-width:920px){.hero .wrap{grid-template-columns:1fr}}
   .tag{display:inline-block;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);border:1px solid rgba(20,184,166,.4);padding:5px 12px;border-radius:30px;margin-bottom:20px}
-  h1{font-size:clamp(2.2rem,5vw,3.5rem);line-height:1.08;margin-bottom:18px}
+  h1{font-size:clamp(2.2rem,5vw,3.4rem);line-height:1.08;margin-bottom:18px}
   h1 .a{color:var(--acc)} h1 .b{color:var(--acc2)}
-  .lead{color:var(--mut);font-size:1.12rem;max-width:560px;margin-bottom:28px}
+  .lead{color:var(--mut);font-size:1.08rem;max-width:580px;margin-bottom:28px}
+  .lead b{color:var(--txt);font-weight:600}
   .btns{display:flex;gap:12px;flex-wrap:wrap}
   .btn{padding:12px 22px;border-radius:10px;font-weight:600;font-size:.97rem;display:inline-block}
   .btn.p{background:var(--acc);color:#05201b}
   .btn.s{border:1px solid var(--line);color:var(--txt)}
-  .btn:hover{transform:translateY(-1px)}
   .net{width:100%;height:auto}
-  .net .ln{stroke:#2b4166;stroke-width:1.6}
+  .net .ln{stroke:#2b4166;stroke-width:1.5}
   .net .flow{stroke-dasharray:6 10;animation:dash 2.4s linear infinite}
   .net .fa{stroke:var(--acc)} .net .fb{stroke:var(--acc2)}
   @keyframes dash{to{stroke-dashoffset:-64}}
-  .net .pulse{animation:pulse 2.6s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+  .net .pulse{animation:pulse 2.6s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:.35}50%{opacity:.9}}
-  .net text{font-size:12px;fill:var(--mut);font-family:inherit}
-  .net .hub text{fill:var(--txt);font-weight:700;font-size:14px}
-
-  /* SECTIONS */
+  .net text{font-size:11.5px;fill:var(--mut);font-family:inherit;stroke:#0b1220;stroke-width:4px;stroke-linejoin:round;paint-order:stroke}
   section{padding:76px 0;border-top:1px solid var(--line)}
   section.alt{background:var(--bg2)}
   .kicker{color:var(--acc);font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}
   h2{font-size:clamp(1.6rem,3vw,2.2rem);margin-bottom:12px}
-  .sub{color:var(--mut);max-width:720px;margin-bottom:36px}
+  .sub{color:var(--mut);max-width:740px;margin-bottom:36px}
   .grid{display:grid;gap:20px}
-  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
-  @media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:620px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:900px){.g3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.g2,.g3{grid-template-columns:1fr}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;transition:.2s}
   .card:hover{border-color:rgba(20,184,166,.45);transform:translateY(-2px)}
-  .card h3{font-size:1.08rem;margin:10px 0 6px}
+  .card h3{font-size:1.1rem;margin:10px 0 6px}
   .card p{color:var(--mut);font-size:.95rem}
-  .ico{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(20,184,166,.12)}
-  .ico svg{width:24px;height:24px;stroke:var(--acc);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:rgba(20,184,166,.12)}
+  .ico svg{width:25px;height:25px;stroke:var(--acc);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   .ico.o{background:rgba(255,181,71,.12)} .ico.o svg{stroke:var(--acc2)}
   .ico.b{background:rgba(106,168,255,.12)} .ico.b svg{stroke:var(--acc3)}
-
-  /* two pillars */
+  .big{padding:30px} .big h3{font-size:1.35rem}
+  .big.t{border-top:3px solid var(--acc)} .big.u{border-top:3px solid var(--acc3)}
+  .abbr{font-family:Consolas,monospace;font-weight:700;font-size:.85rem;padding:2px 9px;border-radius:6px;margin-left:6px;vertical-align:middle}
+  .big.t .abbr{color:var(--acc);background:rgba(20,184,166,.12)} .big.u .abbr{color:var(--acc3);background:rgba(106,168,255,.12)}
   .pillar{padding:30px}
-  .pillar .big{font-size:1.5rem;font-weight:700;margin-bottom:8px}
+  .pillar .bh{font-size:1.45rem;font-weight:700;margin:14px 0 8px}
   .pillar ul{list-style:none;margin-top:14px}
   .pillar li{padding:7px 0 7px 26px;position:relative;color:var(--mut)}
   .pillar li:before{content:"";position:absolute;left:4px;top:15px;width:9px;height:9px;border-radius:50%;background:var(--acc)}
   .pillar.o li:before{background:var(--acc2)}
-
-  /* items (modules / projects) */
   .item{display:flex;flex-direction:column;height:100%}
   .code{font-family:Consolas,"Courier New",monospace;font-weight:700;font-size:.9rem;color:var(--acc);background:rgba(20,184,166,.1);padding:3px 10px;border-radius:6px;align-self:flex-start}
   .code.o{color:var(--acc2);background:rgba(255,181,71,.1)}
@@ -87,17 +80,13 @@
   .chip{font-size:.76rem;color:var(--mut);border:1px solid var(--line);padding:2px 9px;border-radius:20px}
   .item .go{margin-top:auto;font-weight:600}
   .item.soon{opacity:.6;border-style:dashed}
-  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:-16px 0 28px;color:var(--mut);font-size:.9rem}
-  .legend span b{color:var(--txt)}
-
-  /* path */
-  .path{display:grid;grid-template-columns:repeat(4,1fr);gap:0;counter-reset:s}
-  @media(max-width:800px){.path{grid-template-columns:1fr 1fr;gap:20px}}
-  .step{position:relative;padding:0 16px 0 0}
-  .step .n{width:42px;height:42px;border-radius:50%;border:2px solid var(--acc);display:grid;place-items:center;font-weight:700;color:var(--acc);margin-bottom:12px;background:var(--bg2)}
+  .proj{border-left:3px solid var(--acc2)}
+  .path{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:800px){.path{grid-template-columns:1fr 1fr;gap:22px}}
+  .step .n{width:42px;height:42px;border-radius:50%;border:2px solid var(--acc);display:grid;place-items:center;font-weight:700;color:var(--acc);margin-bottom:12px}
+  .step:last-child .n{border-color:var(--acc2);color:var(--acc2)}
   .step h4{margin-bottom:4px}
   .step p{color:var(--mut);font-size:.93rem}
-
   footer{padding:40px 0;border-top:1px solid var(--line);color:var(--mut);font-size:.9rem}
   footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 </style>
@@ -106,8 +95,7 @@
 
 <nav>
   <div class="wrap">
-    <a class="logo" href="#">
-      <svg viewBox="150 310 400 260" aria-hidden="true">
+    <a class="logo" href="#"><svg viewBox="150 310 400 260" aria-hidden="true">
   <!-- ConectLab – simbol B „Două verigi” (variantă pentru fundal închis) -->
   <circle cx="402" cy="440" r="105" fill="none" stroke="#14b8a6" stroke-width="30"/>
   <circle cx="292" cy="440" r="105" fill="none" stroke="#e8eef8" stroke-width="30"/>
@@ -117,16 +105,8 @@
   <circle cx="292" cy="440" r="15" fill="#e8eef8"/>
   <circle cx="402" cy="440" r="15" fill="#14b8a6"/>
   <circle cx="508" cy="440" r="26" fill="#e8eef8"/>
-</svg>
-      <span>Conect<b>Lab</b> EB104</span>
-    </a>
-    <ul>
-      <li><a href="#despre">Despre</a></li>
-      <li><a href="#domenii">Domenii</a></li>
-      <li><a href="#module">Module</a></li>
-      <li><a href="#proiecte">Proiecte</a></li>
-      <li><a href="#studenti">Studenți</a></li>
-    </ul>
+</svg><span>Conect<b>Lab</b> EB104</span></a>
+    <ul><li class="s"><a href="#despre">Despre</a></li><li class="s"><a href="#domenii">Domenii</a></li><li class="s"><a href="#proiecte">Proiecte</a></li><li class="s"><a href="#module">Module</a></li><li class="s"><a href="#studenti">Studenți</a></li><li><a class="lang" href="en/" hreflang="en"><b>RO</b> · EN</a></li></ul>
   </div>
 </nav>
 
@@ -135,40 +115,26 @@
     <div>
       <span class="tag">Laboratorul de Sisteme Conectate · UPB</span>
       <h1>Conectăm <span class="a">echipamente</span>.<br>Conectăm <span class="b">oameni</span>.</h1>
-      <p class="lead">ConectLab EB104 aduce IoT-ul în ingineria electrică: tablouri, invertoare, contoare și senzori legați local, fără cloud, iar în jurul lor studenți, cadre didactice și parteneri care învață și construiesc împreună.</p>
+      <p class="lead">ConectLab EB104 conectează echipamente din <b>ingineria electrică (IIoT)</b> și dispozitive de <b>monitorizare medicală (IoMT)</b>: tablouri, analizoare, invertoare, roboți și senzori biomedicali, legați local, fără cloud. În jurul lor lucrează împreună studenți, masteranzi, doctoranzi și parteneri.</p>
       <div class="btns">
-        <a class="btn p" href="#module">Începe cu modulele</a>
-        <a class="btn s" href="#proiecte">Vezi proiectele</a>
+        <a class="btn p" href="#proiecte">Vezi proiectele</a>
+        <a class="btn s" href="#module">Module de învățare</a>
       </div>
     </div>
-
-    <!-- diagrama: echipamente ↔ hub ↔ oameni -->
-    <svg class="net" viewBox="0 0 520 380" role="img" aria-label="Diagramă: echipamentele și oamenii sunt conectați prin laborator">
-      <!-- linii echipamente -->
-      <line class="ln" x1="70" y1="70" x2="260" y2="190"/><line class="ln flow fa" x1="70" y1="70" x2="260" y2="190"/>
-      <line class="ln" x1="60" y1="190" x2="260" y2="190"/><line class="ln flow fa" x1="60" y1="190" x2="260" y2="190"/>
-      <line class="ln" x1="70" y1="310" x2="260" y2="190"/><line class="ln flow fa" x1="70" y1="310" x2="260" y2="190"/>
-      <!-- linii oameni -->
-      <line class="ln" x1="450" y1="70" x2="260" y2="190"/><line class="ln flow fb" x1="260" y1="190" x2="450" y2="70"/>
-      <line class="ln" x1="460" y1="190" x2="260" y2="190"/><line class="ln flow fb" x1="260" y1="190" x2="460" y2="190"/>
-      <line class="ln" x1="450" y1="310" x2="260" y2="190"/><line class="ln flow fb" x1="260" y1="190" x2="450" y2="310"/>
-
-      <!-- noduri echipamente -->
-      <g><circle cx="70" cy="70" r="26" fill="#14203a" stroke="#14b8a6" stroke-width="2"/>
-        <path d="M60 62h20v16H60z M64 70h4 M72 70h4" stroke="#14b8a6" stroke-width="2" fill="none"/>
-        <text x="70" y="114" text-anchor="middle">Tablou electric</text></g>
-      <g><circle cx="60" cy="190" r="26" fill="#14203a" stroke="#14b8a6" stroke-width="2"/>
-        <path d="M50 196l6-12 6 8 6-10 4 6" stroke="#14b8a6" stroke-width="2" fill="none"/>
-        <text x="60" y="234" text-anchor="middle">Analizor / contor</text></g>
-      <g><circle cx="70" cy="310" r="26" fill="#14203a" stroke="#14b8a6" stroke-width="2"/>
-        <path d="M60 318h20 M64 318v-12h12v12 M70 300v-4" stroke="#14b8a6" stroke-width="2" fill="none"/>
-        <text x="70" y="354" text-anchor="middle">Invertor · senzori</text></g>
-
-      <!-- hub -->
-      <g class="hub">
-        <circle class="pulse" cx="260" cy="190" r="70" fill="rgba(20,184,166,.10)"/>
-        <circle cx="260" cy="190" r="50" fill="#0b1220" stroke="#e8eef8" stroke-width="2"/>
-        <svg x="226" y="160" width="68" height="44" viewBox="150 310 400 260">
+    <svg class="net" viewBox="0 0 540 400" role="img" aria-label="Diagramă: echipamentele și oamenii sunt conectați prin laborator">
+<line class="ln" x1="160" y1="62" x2="270" y2="200"/><line class="ln flow fa" x1="160" y1="62" x2="270" y2="200"/>
+<line class="ln" x1="140" y1="200" x2="270" y2="200"/><line class="ln flow fa" x1="140" y1="200" x2="270" y2="200"/>
+<line class="ln" x1="160" y1="338" x2="270" y2="200"/><line class="ln flow fa" x1="160" y1="338" x2="270" y2="200"/>
+<line class="ln" x1="58" y1="128" x2="270" y2="200"/><line class="ln flow fa" x1="58" y1="128" x2="270" y2="200"/>
+<line class="ln" x1="58" y1="272" x2="270" y2="200"/><line class="ln flow fa" x1="58" y1="272" x2="270" y2="200"/>
+<line class="ln" x1="380" y1="62" x2="270" y2="200"/><line class="ln flow fb" x1="270" y1="200" x2="380" y2="62"/>
+<line class="ln" x1="400" y1="200" x2="270" y2="200"/><line class="ln flow fb" x1="270" y1="200" x2="400" y2="200"/>
+<line class="ln" x1="380" y1="338" x2="270" y2="200"/><line class="ln flow fb" x1="270" y1="200" x2="380" y2="338"/>
+<line class="ln" x1="482" y1="128" x2="270" y2="200"/><line class="ln flow fb" x1="270" y1="200" x2="482" y2="128"/>
+<line class="ln" x1="482" y1="272" x2="270" y2="200"/><line class="ln flow fb" x1="270" y1="200" x2="482" y2="272"/>
+<circle class="pulse" cx="270" cy="200" r="74" fill="rgba(20,184,166,.10)"/>
+<circle cx="270" cy="200" r="54" fill="#0b1220" stroke="#e8eef8" stroke-width="2"/>
+<svg x="232" y="166" width="76" height="50" viewBox="150 310 400 260">
   <!-- ConectLab – simbol B „Două verigi” (variantă pentru fundal închis) -->
   <circle cx="402" cy="440" r="105" fill="none" stroke="#14b8a6" stroke-width="30"/>
   <circle cx="292" cy="440" r="105" fill="none" stroke="#e8eef8" stroke-width="30"/>
@@ -179,20 +145,18 @@
   <circle cx="402" cy="440" r="15" fill="#14b8a6"/>
   <circle cx="508" cy="440" r="26" fill="#e8eef8"/>
 </svg>
-        <text x="260" y="222" text-anchor="middle" style="font-size:11px;fill:#9fb0c8;font-weight:400">ConectLab</text>
-      </g>
-
-      <!-- noduri oameni -->
-      <g><circle cx="450" cy="70" r="26" fill="#14203a" stroke="#ffb547" stroke-width="2"/>
-        <circle cx="450" cy="63" r="6" stroke="#ffb547" stroke-width="2" fill="none"/><path d="M438 82c2-8 22-8 24 0" stroke="#ffb547" stroke-width="2" fill="none"/>
-        <text x="450" y="114" text-anchor="middle">Studenți</text></g>
-      <g><circle cx="460" cy="190" r="26" fill="#14203a" stroke="#ffb547" stroke-width="2"/>
-        <path d="M448 186l12-7 12 7-12 7z M452 189v7c4 4 12 4 16 0v-7" stroke="#ffb547" stroke-width="2" fill="none"/>
-        <text x="460" y="234" text-anchor="middle">Licențe · disertații</text></g>
-      <g><circle cx="450" cy="310" r="26" fill="#14203a" stroke="#ffb547" stroke-width="2"/>
-        <path d="M438 312l8-8 8 6 8-8 8 8 M440 318h20" stroke="#ffb547" stroke-width="2" fill="none"/>
-        <text x="450" y="354" text-anchor="middle">Parteneri · industrie</text></g>
-    </svg>
+<text x="270" y="232" text-anchor="middle" style="font-size:11px;fill:#e8eef8;font-weight:600">ConectLab</text>
+<g><circle cx="160" cy="62" r="24" fill="#14203a" stroke="#14b8a6" stroke-width="2"/><g transform="translate(160 62)" stroke="#14b8a6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 -8h20v16h-20z M-6 0h4 M2 0h4"/></g><text x="160" y="102" text-anchor="middle">Tablou electric</text></g>
+<g><circle cx="140" cy="200" r="24" fill="#14203a" stroke="#14b8a6" stroke-width="2"/><g transform="translate(140 200)" stroke="#14b8a6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-12 1h5l3-7 5 13 3-6h8"/></g><text x="140" y="240" text-anchor="middle">Monitorizare medicală</text></g>
+<g><circle cx="160" cy="338" r="24" fill="#14203a" stroke="#14b8a6" stroke-width="2"/><g transform="translate(160 338)" stroke="#14b8a6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 8h20 M-6 8v-12h12v12 M0 -8v-4"/></g><text x="160" y="378" text-anchor="middle">Invertor · senzori</text></g>
+<g><circle cx="58" cy="128" r="24" fill="#14203a" stroke="#14b8a6" stroke-width="2"/><g transform="translate(58 128)" stroke="#14b8a6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 5l6-11 6 8 6-10 4 6"/></g><text x="58" y="168" text-anchor="middle">Analizor / contor</text></g>
+<g><circle cx="58" cy="272" r="24" fill="#14203a" stroke="#14b8a6" stroke-width="2"/><g transform="translate(58 272)" stroke="#14b8a6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="-8" y="-5" width="16" height="11" rx="2"/><path d="M0 -5v-5 M-4 9v3 M4 9v3"/><circle cx="-3" cy="0" r="1"/><circle cx="3" cy="0" r="1"/></g><text x="58" y="312" text-anchor="middle">Roboți ROS</text></g>
+<g><circle cx="380" cy="62" r="24" fill="#14203a" stroke="#ffb547" stroke-width="2"/><g transform="translate(380 62)" stroke="#ffb547" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-12 -3l12-6 12 6-12 6z M-7 0v6c4 4 10 4 14 0v-6"/></g><text x="380" y="102" text-anchor="middle">Licențe</text></g>
+<g><circle cx="400" cy="200" r="24" fill="#14203a" stroke="#ffb547" stroke-width="2"/><g transform="translate(400 200)" stroke="#ffb547" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-8 -11h12l5 5v17h-17z M-4 -2h9 M-4 3h9 M-4 8h6"/></g><text x="400" y="240" text-anchor="middle">Disertații</text></g>
+<g><circle cx="380" cy="338" r="24" fill="#14203a" stroke="#ffb547" stroke-width="2"/><g transform="translate(380 338)" stroke="#ffb547" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-9 -9h18v14h-18z M-3 5v6 M3 5v6 M-6 11h12 M-5 -3l3 3 6-6"/></g><text x="380" y="378" text-anchor="middle">Doctorat</text></g>
+<g><circle cx="482" cy="128" r="24" fill="#14203a" stroke="#ffb547" stroke-width="2"/><g transform="translate(482 128)" stroke="#ffb547" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="-5" r="5"/><path d="M-10 11c2-8 18-8 20 0"/></g><text x="482" y="168" text-anchor="middle">Studenți</text></g>
+<g><circle cx="482" cy="272" r="24" fill="#14203a" stroke="#ffb547" stroke-width="2"/><g transform="translate(482 272)" stroke="#ffb547" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M-12 2l7-7 6 5 6-6 7 7 M-10 8h20"/></g><text x="482" y="312" text-anchor="middle">Parteneri · industrie</text></g>
+</svg>
   </div>
 </header>
 
@@ -200,29 +164,19 @@
   <div class="wrap">
     <p class="kicker">Despre laborator</p>
     <h2>Un singur loc, două tipuri de conexiuni</h2>
-    <p class="sub">Numele spune tot: în EB104 legăm echipamentele între ele și oamenii între ei. Fiecare aplicație construită aici devine material de învățare pentru următoarea generație de studenți.</p>
+    <p class="sub">Numele spune tot: în EB104 legăm echipamentele între ele și oamenii între ei. Fiecare realizare devine material de învățare pentru generația următoare.</p>
     <div class="grid g2">
       <div class="card pillar">
         <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M7 9h3M14 9h3"/></svg></div>
-        <div class="big" style="margin-top:14px">Conectăm echipamente</div>
-        <p style="color:var(--mut)">Integrăm aparatele reale din instalațiile electrice într-o arhitectură IIoT locală.</p>
-        <ul>
-          <li>Modbus RTU/TCP, MQTT, ESPHome, Home Assistant</li>
-          <li>Gateway-uri ESP32 pentru analizoare, contoare, invertoare</li>
-          <li>Date proprii, local, fără cloud-ul producătorului</li>
-          <li>Dashboard-uri SCADA pentru tablourile laboratorului</li>
-        </ul>
+        <div class="bh">Conectăm echipamente</div>
+        <p style="color:var(--mut)">Aparate reale, integrate într-o arhitectură locală, fără cloud-ul producătorului.</p>
+        <ul><li>IIoT: tablouri, analizoare, contoare, invertoare (Modbus, MQTT, ESPHome)</li><li>IoMT: senzori și dispozitive de monitorizare medicală</li><li>Roboți mobili cu ROS</li><li>Dashboard-uri SCADA în Home Assistant</li></ul>
       </div>
       <div class="card pillar o">
         <div class="ico o"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 19c1-4 11-4 12 0M14 19c.6-2.6 6-2.8 7 0"/></svg></div>
-        <div class="big" style="margin-top:14px">Conectăm oameni</div>
-        <p style="color:var(--mut)">Studenții lucrează în echipe pe echipamente reale, de la primul laborator până la lucrarea de licență.</p>
-        <ul>
-          <li>Module comune, pas cu pas, folosite de mai multe discipline</li>
-          <li>Instanțe Home Assistant pentru echipe de studenți</li>
-          <li>Teme de licență și disertație pornite din proiecte reale</li>
-          <li>Colaborări cu alte laboratoare și cu industria</li>
-        </ul>
+        <div class="bh">Conectăm oameni</div>
+        <p style="color:var(--mut)">Studenții lucrează în echipe pe echipamente reale, de la primul laborator până la teză.</p>
+        <ul><li>Module comune, pas cu pas, folosite de mai multe discipline</li><li>Licențe, disertații și doctorate pornite din proiecte reale</li><li>Echipe de studenți cu instanțe Home Assistant proprii</li><li>Colaborări cu alte laboratoare, cu clinici și cu industria</li></ul>
       </div>
     </div>
   </div>
@@ -231,59 +185,40 @@
 <section id="domenii" class="alt">
   <div class="wrap">
     <p class="kicker">Domenii</p>
-    <h2>IoT pentru ingineria electrică</h2>
-    <p class="sub">Nu facem IoT generic, ci IoT legat de instalații, energie și oameni.</p>
-    <div class="grid g4">
-      <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 14 0M8.5 12a3.5 3.5 0 0 1 7 0"/><circle cx="12" cy="12" r="1"/><path d="M12 13v7"/></svg></div><h3>IIoT și sisteme conectate</h3><p>Achiziție de date, protocoale industriale, gateway-uri și brokeri MQTT.</p></div>
-      <div class="card"><div class="ico o"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><h3>Energie și calitatea energiei</h3><p>Monitorizare consum, fotovoltaice, invertoare și calitatea energiei ca domeniu de aplicație.</p></div>
-      <div class="card"><div class="ico b"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg></div><h3>e-Health</h3><p>Senzori și sisteme conectate pentru aplicații din zona sănătății.</p></div>
-      <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="9" rx="2"/><circle cx="10" cy="12.5" r="1"/><circle cx="14" cy="12.5" r="1"/><path d="M12 4v4M8 20h8M4 12h2M18 12h2"/></svg></div><h3>Robotică cu ROS</h3><p>Roboți mobili, senzori și comunicație, ca platformă de proiect pentru studenți.</p></div>
+    <h2>Două direcții principale</h2>
+    <p class="sub">IoT aplicat acolo unde contează: în instalațiile electrice și în monitorizarea sănătății.</p>
+    <div class="grid g2" style="margin-bottom:20px">
+      <div class="card big t">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div>
+        <h3>IIoT pentru ingineria electrică<span class="abbr">IIoT</span></h3>
+        <p>Internetul industrial al lucrurilor aplicat instalațiilor electrice: achiziție de date din tablouri, analizoare de rețea, contoare și invertoare, prin Modbus RTU/TCP și MQTT, cu gateway-uri ESP32 și Home Assistant.</p>
+        <div class="chips"><span class="chip">Modbus</span><span class="chip">MQTT</span><span class="chip">ESPHome</span><span class="chip">SCADA</span></div>
+      </div>
+      <div class="card big u">
+        <div class="ico b"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg></div>
+        <h3>IoMT pentru monitorizare medicală<span class="abbr">IoMT</span></h3>
+        <p>Internet of Medical Things: senzori și dispozitive care colectează și transmit date de sănătate. În laborator, monitorizarea medicală se face în scop didactic și de cercetare, cu accent pe achiziția și securitatea datelor.</p>
+        <div class="chips"><span class="chip">senzori biomedicali</span><span class="chip">e-Health</span><span class="chip">securitatea datelor</span></div>
+      </div>
+    </div>
+    <div class="grid g2">
+      <div class="card"><div class="ico o"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></div><h3>Energie și calitatea energiei</h3><p>Consum, fotovoltaice și calitatea energiei, ca domeniu de aplicație.</p></div>
+      <div class="card"><div class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="9" rx="2"/><circle cx="10" cy="12.5" r="1"/><circle cx="14" cy="12.5" r="1"/><path d="M12 4v4M8 20h8M4 12h2M18 12h2"/></svg></div><h3>Robotică cu ROS</h3><p>Roboți mobili, senzori și comunicație, ca platformă de proiect.</p></div>
     </div>
   </div>
 </section>
 
-<section id="module">
+<section id="proiecte">
   <div class="wrap">
-    <p class="kicker">Module comune · M0x</p>
-    <h2>Module: pașii de bază</h2>
-    <p class="sub">Un modul te învață să instalezi și să configurezi o piesă de bază. Modulele sunt comune tuturor disciplinelor și sunt pasul de start pentru licențe. Fiecare este o aplicație interactivă care rulează în browser.</p>
+    <p class="kicker">Realizări · ConectLab-0x</p>
+    <h2>Proiecte: realizări concrete</h2>
+    <p class="sub">Fiecare proiect rezolvă o problemă reală și este livrat ca aplicație interactivă, pas cu pas, ca oricine să îl poată reproduce.</p>
     <div class="grid g3">
-      <div class="card item">
-        <span class="code">M01</span>
-        <h3>Instalarea Home Assistant</h3>
-        <p>Trei variante, pas cu pas: Raspberry Pi, mașină virtuală VMware Workstation și server Proxmox VE.</p>
-        <div class="chips"><span class="chip">Raspberry Pi</span><span class="chip">VMware</span><span class="chip">Proxmox</span></div>
-        <a class="go" href="M01/CONECTLAB_M01_Instalare_Home_Assistant_v1.1.html">Deschide modulul →</a>
-      </div>
-      <div class="card item">
-        <span class="code">M02</span>
-        <h3>Apps esențiale Home Assistant</h3>
-        <p>Setul minim pentru un sistem complet: broker, firmware, stocare, grafice, automatizări și acces la distanță.</p>
-        <div class="chips"><span class="chip">MQTT</span><span class="chip">ESPHome</span><span class="chip">InfluxDB</span><span class="chip">Grafana</span><span class="chip">Node-RED</span><span class="chip">DuckDNS</span><span class="chip">Tailscale</span><span class="chip">WireGuard</span></div>
-        <a class="go" href="M02/CONECTLAB_M02_Apps_Esentiale_Home_Assistant_v1.0.html">Deschide modulul →</a>
-      </div>
-      <div class="card item">
-        <span class="code">M03</span>
-        <h3>HA pe laptop și Growatt prin Modbus</h3>
-        <p>Citirea invertorului Growatt SPF pe RS485, cu convertor USB sau gateway Waveshare ESP32-S3, fără Solar Assistant.</p>
-        <div class="chips"><span class="chip">Modbus RS485</span><span class="chip">Growatt SPF</span><span class="chip">ESP32-S3</span></div>
-        <a class="go" href="M03/CONECTLAB_M03_HA_Laptop_Growatt_Modbus_v1.2.html">Deschide modulul →</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="proiecte" class="alt">
-  <div class="wrap">
-    <p class="kicker">Proiecte ConectLab · ConectLab-0x</p>
-    <h2>Proiecte: soluții reale, livrate pas cu pas</h2>
-    <p class="sub">Un proiect rezolvă o problemă concretă a unui beneficiar, folosind modulele. Soluția este publicată ca aplicație interactivă, ca oricine să o poată reproduce.</p>
-    <div class="grid g3">
-      <div class="card item">
+      <div class="card item proj">
         <span class="code o">ConectLab-01</span>
         <h3>Sinotimer local, fără cloud</h3>
         <p>Timerul inteligent Sinotimer SVP-688W integrat în Home Assistant și controlat local, fără cloud-ul producătorului.</p>
-        <div class="chips"><span class="chip">Home Assistant</span><span class="chip">local control</span><span class="chip">fără cloud</span></div>
+        <div class="chips"><span class="chip">Home Assistant</span><span class="chip">control local</span><span class="chip">fără cloud</span></div>
         <a class="go" href="https://conectlab-upb.github.io/ConectLab-01-Sinotimer-Local/">Deschide proiectul →</a>
       </div>
       <div class="card item soon">
@@ -297,17 +232,43 @@
   </div>
 </section>
 
+<section id="module" class="alt">
+  <div class="wrap">
+    <p class="kicker">Module de învățare · M0x</p>
+    <h2>Module: pașii de bază</h2>
+    <p class="sub">Modulele te învață piesele de bază pe care se construiesc proiectele. Sunt comune tuturor disciplinelor și reprezintă pasul de start pentru lucrările de licență și disertație.</p>
+    <div class="grid g3">
+      <div class="card item">
+        <span class="code">M01</span>
+        <h3>Instalarea Home Assistant</h3>
+        <p>Trei variante, pas cu pas: Raspberry Pi, mașină virtuală VMware Workstation și server Proxmox VE.</p>
+        <div class="chips"><span class="chip">Raspberry Pi</span><span class="chip">VMware</span><span class="chip">Proxmox</span></div>
+        <a class="go" href="M01/CONECTLAB_M01_Instalare_Home_Assistant_v1.1.html">Deschide modulul →</a>
+      </div>
+      <div class="card item">
+        <span class="code">M02</span>
+        <h3>Apps esențiale Home Assistant</h3>
+        <p>Setul minim pentru un sistem complet: broker, firmware, stocare, grafice, automatizări și acces la distanță.</p>
+        <div class="chips"><span class="chip">MQTT</span><span class="chip">ESPHome</span><span class="chip">InfluxDB</span><span class="chip">Grafana</span><span class="chip">Node-RED</span><span class="chip">Tailscale</span></div>
+        <a class="go" href="M02/CONECTLAB_M02_Apps_Esentiale_Home_Assistant_v1.0.html">Deschide modulul →</a>
+      </div>
+      <div class="card item">
+        <span class="code">M03</span>
+        <h3>HA pe laptop și Growatt prin Modbus</h3>
+        <p>Citirea invertorului Growatt SPF pe RS485, cu convertor USB sau gateway Waveshare ESP32-S3, fără Solar Assistant.</p>
+        <div class="chips"><span class="chip">Modbus RS485</span><span class="chip">Growatt SPF</span><span class="chip">ESP32-S3</span></div>
+        <a class="go" href="M03/CONECTLAB_M03_HA_Laptop_Growatt_Modbus_v1.2.html">Deschide modulul →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="studenti">
   <div class="wrap">
     <p class="kicker">Pentru studenți</p>
-    <h2>Drumul unui student prin ConectLab</h2>
-    <p class="sub">De la prima instalare până la o lucrare de licență construită pe echipamente reale.</p>
-    <div class="path">
-      <div class="step"><div class="n">1</div><h4>Modulele M0x</h4><p>Instalezi Home Assistant și aplicațiile de bază.</p></div>
-      <div class="step"><div class="n">2</div><h4>Echipa ta</h4><p>Primești o instanță Home Assistant și lucrezi în echipă.</p></div>
-      <div class="step"><div class="n">3</div><h4>Un proiect</h4><p>Conectezi un echipament real din laborator.</p></div>
-      <div class="step"><div class="n">4</div><h4>Licența</h4><p>Proiectul devine temă de licență sau disertație.</p></div>
-    </div>
+    <h2>Drumul prin ConectLab</h2>
+    <p class="sub">De la prima instalare până la o lucrare construită pe echipamente reale.</p>
+    <div class="path"><div class="step"><div class="n">1</div><h4>Module</h4><p>Înveți piesele de bază: Home Assistant, protocoale, gateway-uri.</p></div><div class="step"><div class="n">2</div><h4>Echipa ta</h4><p>Lucrezi în echipă, pe o instanță Home Assistant proprie.</p></div><div class="step"><div class="n">3</div><h4>Un proiect</h4><p>Conectezi un echipament real din laborator.</p></div><div class="step"><div class="n">4</div><h4>Licență · Disertație · Doctorat</h4><p>Proiectul devine temă de licență, de disertație sau de doctorat.</p></div></div>
   </div>
 </section>
 
