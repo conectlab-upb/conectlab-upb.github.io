@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConectLab · M03 · Home Assistant pe laptop și Growatt prin Modbus</title>
+<style>
+  :root {
+    --bg: #0b1724;
+    --panel: #12243a;
+    --panel2: #183050;
+    --ink: #e7f0fa;
+    --muted: #9fb3c8;
+    --ha: #18bcf2;
+    --ha-dark: #0b7fb0;
+    --acc: #ff9f43;
+    --ok: #2ecc71;
+    --bad: #ff5c5c;
+    --warn: #ffd166;
+    --line: #2a4566;
+    --code: #07111b;
+    --rpi: #18bcf2;
+    --vmw: #2ecc71;
+    --pve: #ff9f43;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(120deg, #0b1724 0%, #10345a 60%, #0b7fb0 100%);
+    padding: 18px 20px 14px;
+    border-bottom: 3px solid var(--ha);
+  }
+  header .tag { color: var(--ha); font-weight: 700; letter-spacing: .08em; font-size: .8rem; }
+  header h1 { margin: 4px 0 2px; font-size: 1.6rem; }
+  header p { margin: 0; color: var(--muted); font-size: .92rem; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  input, select, textarea {
+    background: var(--code); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 8px; font: inherit;
+  }
+  textarea { width: 100%; min-height: 70px; }
+  button {
+    background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 7px; padding: 7px 12px; font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: var(--ha); }
+  button.primary { background: var(--ha-dark); border-color: var(--ha); }
+  button.fault { border-color: var(--bad); color: #ffd0d0; }
+  nav.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 14px; }
+  nav.tabs button { border-radius: 20px; }
+  nav.tabs button.active { background: var(--ha); color: #04121e; font-weight: 700; }
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+  .card h2 { margin-top: 0; font-size: 1.2rem; color: var(--ha); }
+  .card h3 { margin: 14px 0 6px; font-size: 1.02rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .route {
+    border-radius: 12px; padding: 14px; border: 2px solid var(--line);
+    background: var(--panel2); cursor: pointer; transition: transform .15s;
+  }
+  .route:hover { transform: translateY(-2px); }
+  .route.sel { border-color: var(--ha); box-shadow: 0 0 0 3px rgba(24,188,242,.25); }
+  .route .ico { font-size: 1.7rem; }
+  .route b { display: block; font-size: 1.05rem; }
+  .route small { color: var(--muted); }
+  .r-rpi { border-left: 6px solid var(--rpi); }
+  .r-vmw { border-left: 6px solid var(--vmw); }
+  .r-pve { border-left: 6px solid var(--pve); }
+  .steps { list-style: none; padding: 0; margin: 0; counter-reset: st; }
+  .steps li {
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 10px 48px;
+    margin-bottom: 8px; position: relative; background: #0f2034;
+  }
+  .steps li::before {
+    counter-increment: st; content: counter(st);
+    position: absolute; left: 12px; top: 10px; width: 26px; height: 26px;
+    border-radius: 50%; background: var(--line); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .steps li.done::before { background: var(--ok); color: #04121e; content: "✓"; }
+  .steps li.now { border-color: var(--ha); }
+  .steps li.now::before { background: var(--ha); color: #04121e; }
+  .steps li.err { border-color: var(--bad); }
+  .steps li.err::before { background: var(--bad); content: "!"; }
+  .steps li h4 { margin: 0 0 4px; font-size: 1rem; }
+  .steps li p { margin: 4px 0; color: #cfdceb; font-size: .93rem; }
+  .cmd { position: relative; margin: 6px 0; }
+  .cmd pre {
+    background: var(--code); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 70px 10px 12px; margin: 0; overflow-x: auto;
+    font-family: Consolas, "Courier New", monospace; font-size: .86rem; color: #bdf3c4;
+    white-space: pre;
+  }
+  .cmd button { position: absolute; top: 6px; right: 6px; padding: 3px 8px; font-size: .78rem; }
+  .tip { border-left: 4px solid var(--warn); background: rgba(255,209,102,.08); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: .9rem; }
+  .danger { border-left: 4px solid var(--bad); background: rgba(255,92,92,.08); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: .9rem; }
+  .console {
+    background: #000; color: #9cf59c; font-family: Consolas, monospace; font-size: .82rem;
+    border-radius: 8px; padding: 10px; height: 230px; overflow-y: auto; border: 1px solid var(--line);
+  }
+  .console .e { color: #ff7b7b; }
+  .console .w { color: var(--warn); }
+  .console .i { color: #8fd8ff; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  .bar { height: 10px; background: var(--code); border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--ha-dark), var(--ha)); transition: width .3s; }
+  svg text { font-family: "Segoe UI", Arial, sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { border: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--panel2); }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; }
+  .p-ok { background: rgba(46,204,113,.2); color: var(--ok); }
+  .p-mid { background: rgba(255,209,102,.18); color: var(--warn); }
+  .p-bad { background: rgba(255,92,92,.18); color: var(--bad); }
+  .q { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .q label { display: block; padding: 3px 0; cursor: pointer; }
+  .q .fb { font-size: .9rem; margin-top: 4px; }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; background: #0f2034; }
+  summary { cursor: pointer; font-weight: 700; color: var(--ha); }
+  .status { min-height: 1.4em; color: var(--warn); font-size: .9rem; }
+  .check { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; }
+  footer { color: var(--muted); font-size: .82rem; text-align: center; padding: 18px 10px 30px; }
+  @media (max-width: 760px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.3rem; }
+  }
+  @media print {
+    body { background: #fff; color: #000; }
+    .noprint, nav.tabs, header { display: none !important; }
+    section.tab { display: none !important; }
+    section#t-fisa { display: block !important; }
+    .card { border: 1px solid #999; background: #fff; color: #000; }
+    .card h2 { color: #000; }
+    input, textarea { background: #fff; color: #000; border: 1px solid #999; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .route { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="tag">CONECTLAB EB104 · MODUL COMUN M03 · GHID DE INSTALARE</div>
+    <h1>Home Assistant pe laptop și invertorul Growatt citit prin Modbus RS485</h1>
+    <p>Fără cloud și fără Solar Assistant: cablu RS485 în laptop sau placă ESP32 prin Wi-Fi · exemplu real: Growatt SPF 6000 ES Plus</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="tabs noprint" id="tabs">
+    <button data-t="t-start" class="active">1 · Începe aici</button>
+    <button data-t="t-banc">2 · Instalare pas cu pas</button>
+    <button data-t="t-mb">3 · Cititor Modbus</button>
+    <button data-t="t-comp">4 · Registre și cablu</button>
+    <button data-t="t-fisa">5 · Jurnal de validare</button>
+    <button data-t="t-brev">6 · Breviar</button>
+  </nav>
+
+  <!-- ================= 1 · ÎNCEPE AICI ================= -->
+  <section class="tab active" id="t-start">
+    <div class="card">
+      <h2>Ce se face</h2>
+      <p>Home Assistant se instalează pe un <b>laptop</b> și se citesc datele invertorului <b>direct</b>, prin protocolul <b>Modbus RTU</b> pe linia <b>RS485</b>: fără cloud-ul producătorului și fără Solar Assistant. Exemplul real este invertorul off-grid <b>Growatt SPF 6000 ES Plus</b>. Trei etape:</p>
+      <div class="grid3" id="routePick">
+        <div class="route r-rpi" data-r="laptop"><div class="ico">💻</div><b>Etapa 1 · HA pe laptop</b><small>Home Assistant OS instalat pe discul laptopului, cu Ubuntu de pe stick</small></div>
+        <div class="route r-vmw" data-r="usb"><div class="ico">🔌</div><b>Etapa 2 · Cablu RS485 → USB</b><small>convertor USB–RS485 (~6 €) în laptop, integrarea Modbus din HA</small></div>
+        <div class="route r-pve" data-r="esp"><div class="ico">📡</div><b>Etapa 3 · ESP32 prin Wi-Fi</b><small>Waveshare ESP32-S3-RS485-CAN (~19 $) lângă invertor, ESPHome</small></div>
+      </div>
+      <p style="margin-top:10px" class="tip">Etapa 2 și etapa 3 sunt variante: alegi una. Cu cablul, laptopul stă lângă invertor; cu ESP32, laptopul poate fi oriunde în casă.</p>
+    </div>
+
+    <div class="card">
+      <h2>Arhitectura: două drumuri de la invertor la Home Assistant</h2>
+      <svg viewBox="0 0 900 380" width="100%" role="img" aria-label="Invertorul citit prin RS485 direct de laptop sau prin ESP32 pe Wi-Fi">
+        <defs>
+          <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2ecc71"/></marker>
+          <marker id="ar3" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff9f43"/></marker>
+        </defs>
+        <g id="arcCols">
+          <rect x="20" y="130" width="190" height="120" rx="12" fill="#183050" stroke="#9fb3c8"/>
+          <text x="115" y="165" fill="#e7f0fa" text-anchor="middle" font-size="15" font-weight="700">Growatt SPF</text>
+          <text x="115" y="186" fill="#9fb3c8" text-anchor="middle" font-size="12">port RS485 (expansion)</text>
+          <text x="115" y="206" fill="#9fb3c8" text-anchor="middle" font-size="12">RJ45: pin 1 = B, pin 2 = A</text>
+          <text x="115" y="228" fill="#9fb3c8" text-anchor="middle" font-size="12">Modbus RTU · 9600 8N1 · adr. 1</text>
+          <g data-g="usb">
+            <rect x="290" y="40" width="200" height="70" rx="10" fill="#0f2034" stroke="#2ecc71"/>
+            <text x="390" y="68" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Convertor USB–RS485</text>
+            <text x="390" y="90" fill="#9fb3c8" text-anchor="middle" font-size="12">A · B · (GND)</text>
+            <path d="M210,160 C250,160 250,75 290,75" stroke="#2ecc71" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+            <text x="238" y="112" fill="#2ecc71" font-size="12">cablu A/B</text>
+            <path d="M490,75 C540,75 540,165 600,165" stroke="#2ecc71" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+            <text x="512" y="112" fill="#2ecc71" font-size="12">USB</text>
+          </g>
+          <g data-g="esp">
+            <rect x="290" y="270" width="200" height="70" rx="10" fill="#0f2034" stroke="#ff9f43"/>
+            <text x="390" y="298" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">ESP32-S3-RS485-CAN</text>
+            <text x="390" y="320" fill="#9fb3c8" text-anchor="middle" font-size="12">ESPHome · alimentare 7–36 V</text>
+            <path d="M210,220 C250,220 250,305 290,305" stroke="#ff9f43" stroke-width="3" fill="none" marker-end="url(#ar3)"/>
+            <text x="230" y="282" fill="#ff9f43" font-size="12">cablu A/B</text>
+            <path id="flowA" d="M490,305 C545,305 545,215 600,215" stroke="#ff9f43" stroke-width="3" stroke-dasharray="7 5" fill="none" marker-end="url(#ar3)"/>
+            <text x="515" y="282" fill="#ff9f43" font-size="12">Wi-Fi</text>
+          </g>
+          <g data-g="laptop">
+            <rect x="600" y="130" width="270" height="120" rx="12" fill="#0b7fb0" stroke="#18bcf2"/>
+            <text x="735" y="165" fill="#fff" text-anchor="middle" font-size="16" font-weight="700">Laptop · Home Assistant OS</text>
+            <text x="735" y="190" fill="#d9f3ff" text-anchor="middle" font-size="12">integrarea Modbus (cablu) sau ESPHome</text>
+            <text x="735" y="212" fill="#d9f3ff" text-anchor="middle" font-size="12">senzori: PV, baterie, SOC, ieșire</text>
+            <text x="735" y="234" fill="#d9f3ff" text-anchor="middle" font-size="12">bateria laptopului = UPS</text>
+          </g>
+        </g>
+        <circle id="pkt" r="6" fill="#ff9f43"/>
+      </svg>
+      <p style="color:var(--muted);font-size:.9rem">Verde: varianta cu cablu (cea mai ieftină). Portocaliu: varianta fără fir. În ambele, invertorul este „sclav” Modbus: răspunde doar când este întrebat.</p>
+    </div>
+
+    <div class="card">
+      <h2>Ce cumperi</h2>
+      <table>
+        <tr><th>Componentă</th><th>Rol</th><th>Preț orientativ</th></tr>
+        <tr><td>Laptop x86-64 cu port Ethernet (sau adaptor USB–Ethernet)</td><td>gazda Home Assistant</td><td>laptop vechi, refolosit</td></tr>
+        <tr><td>Stick USB ≥ 8 GB</td><td>Ubuntu „live”, doar la instalare</td><td>—</td></tr>
+        <tr><td>Convertor USB–RS485 (bornă A, B, GND)</td><td>varianta cu cablu</td><td>~6 € fără TVA</td></tr>
+        <tr><td>Waveshare ESP32-S3-RS485-CAN + sursă 12 V</td><td>varianta Wi-Fi</td><td>~19 $ placa</td></tr>
+        <tr><td>Cablu UTP cu mufă RJ45 la un capăt</td><td>legătura cu portul RS485 al invertorului</td><td>—</td></tr>
+      </table>
+      <h3>Ordinea de lucru</h3>
+      <table>
+        <tr><td>1</td><td>Pornești laptopul cu Ubuntu de pe stick și faci <b>testul rapid al cablului</b> (fila 2, etapa 1, pasul 4): afli din prima dacă invertorul tău răspunde pe RS485.</td></tr>
+        <tr><td>2</td><td>Instalezi Home Assistant pe laptop (restul pașilor din etapa 1).</td></tr>
+        <tr><td>3</td><td>Cablul și configurația Modbus (etapa 2). Placa ESP32 (etapa 3) doar dacă laptopul nu poate sta lângă invertor.</td></tr>
+        <tr><td>4</td><td>Compari valorile din Home Assistant cu afișajul invertorului și completezi <b>jurnalul de validare</b> (fila 5): ce a mers, ce a fost diferit față de ghid. Exporți jurnalul și i-l trimiți lui Florin.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= 2 · BANC VIRTUAL ================= -->
+  <section class="tab" id="t-banc">
+    <div class="card">
+      <h2>Instalare pas cu pas (cu simulare)</h2>
+      <div class="controls">
+        <label for="routeSel">Etapa:</label>
+        <select id="routeSel">
+          <option value="laptop">1 · HA pe laptop</option>
+          <option value="usb">2 · Cablu RS485 → USB</option>
+          <option value="esp">3 · ESP32 prin Wi-Fi</option>
+        </select>
+        <button class="primary" id="btnPlay">▶ Pornește simularea</button>
+        <button id="btnPause">⏸ Pauză</button>
+        <button id="btnReset">⟲ Reset</button>
+        <label for="speed">Viteză</label>
+        <select id="speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select>
+      </div>
+      <div class="bar"><div id="prog"></div></div>
+      <p style="color:var(--muted);font-size:.88rem;margin:6px 0">Simularea arată ce vezi pe ecran la fiecare pas. Nu este o instalare reală.</p>
+      <div class="grid2">
+        <div>
+          <h3>Pași (configurațiile se copiază cu „Copiază”)</h3>
+          <ol class="steps" id="stepList"></ol>
+        </div>
+        <div>
+          <h3>Ecran / jurnal</h3>
+          <div class="console" id="console" aria-live="polite"></div>
+          <h3>Butoane de defect</h3>
+          <p style="font-size:.88rem;color:var(--muted);margin:2px 0 6px">Apasă un defect, apoi pornește simularea: vezi simptomul și diagnosticul.</p>
+          <div class="controls" id="faults"></div>
+          <div id="faultInfo"></div>
+          <div class="controls">
+            <button id="btnNote">📝 Notează în jurnal</button>
+            <button id="btnCsv">⬇ Export CSV jurnal</button>
+          </div>
+          <div class="status" id="bancStatus" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3 · CITITOR MODBUS ================= -->
+  <section class="tab" id="t-mb">
+    <div class="card">
+      <h2>Cititor Modbus: cum întreabă Home Assistant invertorul</h2>
+      <p style="color:var(--muted)">Simulare didactică: invertorul virtual are valori tipice de la amiază. Alegi registrul, construiești cererea, o „trimiți” și urmărești răspunsul octet cu octet.</p>
+      <div class="controls">
+        <label for="mbReg">Registru:</label>
+        <select id="mbReg"></select>
+        <label for="mbAddr">Adresă sclav:</label>
+        <input id="mbAddr" type="number" min="1" max="247" value="1" style="width:70px">
+        <label for="mbBaud">Viteză:</label>
+        <select id="mbBaud"><option>9600</option><option>19200</option><option>115200</option></select>
+      </div>
+      <div class="controls">
+        <label><input type="checkbox" id="mbSwap"> fire A/B inversate</label>
+        <label><input type="checkbox" id="mbWord"> ordine cuvinte inversată (32 biți)</label>
+        <label for="mbInv">Adresa setată în invertor (Program 28):</label>
+        <input id="mbInv" type="number" min="1" max="255" value="1" style="width:70px">
+      </div>
+      <div class="controls"><button class="primary" id="mbSend">📤 Trimite cererea</button><span class="status" id="mbStatus" role="status"></span></div>
+      <div class="grid2">
+        <div>
+          <h3>Cererea (master → invertor)</h3>
+          <div id="mbReq" class="console" style="height:auto;min-height:120px"></div>
+        </div>
+        <div>
+          <h3>Răspunsul (invertor → master)</h3>
+          <div id="mbResp" class="console" style="height:auto;min-height:120px"></div>
+        </div>
+      </div>
+      <h3>Decodare</h3>
+      <div id="mbDecode" class="tip">Apasă „Trimite cererea”.</div>
+    </div>
+  </section>
+
+  <!-- ================= 4 · REGISTRE ================= -->
+  <section class="tab" id="t-comp">
+    <div class="card">
+      <h2>Registre de intrare Growatt SPF (funcția 04)</h2>
+      <table>
+        <tr><th>Reg.</th><th>Mărime</th><th>Tip</th><th>Scalare</th><th>Unitate</th></tr>
+        <tr><td>0</td><td>Starea invertorului</td><td>uint16</td><td>cod</td><td>—</td></tr>
+        <tr><td>1</td><td>Tensiune PV1</td><td>uint16</td><td>× 0,1</td><td>V</td></tr>
+        <tr><td>2</td><td>Tensiune PV2</td><td>uint16</td><td>× 0,1</td><td>V</td></tr>
+        <tr><td>3–4</td><td>Putere PV1</td><td>uint32</td><td>× 0,1</td><td>W</td></tr>
+        <tr><td>5–6</td><td>Putere PV2</td><td>uint32</td><td>× 0,1</td><td>W</td></tr>
+        <tr><td>9–10</td><td>Putere activă la ieșire</td><td>uint32</td><td>× 0,1</td><td>W</td></tr>
+        <tr><td>17</td><td>Tensiune baterie</td><td>uint16</td><td>× 0,01</td><td>V</td></tr>
+        <tr><td>18</td><td>SOC baterie</td><td>uint16</td><td>× 1</td><td>%</td></tr>
+        <tr><td>20</td><td>Tensiune rețea (intrare AC)</td><td>uint16</td><td>× 0,1</td><td>V</td></tr>
+        <tr><td>21</td><td>Frecvență rețea</td><td>uint16</td><td>× 0,01</td><td>Hz</td></tr>
+        <tr><td>22</td><td>Tensiune la ieșire</td><td>uint16</td><td>× 0,1</td><td>V</td></tr>
+        <tr><td>25</td><td>Temperatură invertor</td><td>uint16</td><td>× 0,1</td><td>°C</td></tr>
+        <tr><td>27</td><td>Încărcare (sarcină)</td><td>uint16</td><td>× 0,1</td><td>%</td></tr>
+      </table>
+      <p style="color:var(--muted);font-size:.88rem">Sursa: harta registrelor pentru invertoarele off-grid SPF din proiectul deschis Growatt Local (WouterTuinstra/Homeassistant-Growatt-Local-Modbus), confirmată parțial de configurații ESPHome publicate pentru SPF 5000 ES. Registrele trebuie verificate pe invertorul tău: firmware-ul poate diferi.</p>
+    </div>
+    <div class="card">
+      <h2>Cablul RS485</h2>
+      <svg viewBox="0 0 860 220" width="100%" role="img" aria-label="Legătura RJ45 a invertorului la convertor">
+        <rect x="20" y="40" width="200" height="140" rx="10" fill="#183050" stroke="#9fb3c8"/>
+        <text x="120" y="70" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Mufă RJ45 în portul</text>
+        <text x="120" y="90" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">RS485 (expansion)</text>
+        <text x="120" y="122" fill="#18bcf2" text-anchor="middle" font-size="13">pin 1 · RS485-B</text>
+        <text x="120" y="146" fill="#ff9f43" text-anchor="middle" font-size="13">pin 2 · RS485-A</text>
+        <text x="120" y="168" fill="#9fb3c8" text-anchor="middle" font-size="11">pinii 3–8 nefolosiți</text>
+        <path d="M220,118 L620,118" stroke="#18bcf2" stroke-width="4"/>
+        <path d="M220,142 L620,142" stroke="#ff9f43" stroke-width="4"/>
+        <text x="420" y="110" fill="#18bcf2" text-anchor="middle" font-size="12">B (T568B: alb-portocaliu)</text>
+        <text x="420" y="162" fill="#ff9f43" text-anchor="middle" font-size="12">A (T568B: portocaliu)</text>
+        <rect x="620" y="60" width="220" height="120" rx="10" fill="#0f2034" stroke="#2ecc71"/>
+        <text x="730" y="90" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Convertor / ESP32</text>
+        <text x="730" y="122" fill="#18bcf2" text-anchor="middle" font-size="13">bornă B (B−)</text>
+        <text x="730" y="146" fill="#ff9f43" text-anchor="middle" font-size="13">bornă A (A+)</text>
+      </svg>
+      <div class="danger">Folosește portul <b>RS485 „for expansion”</b>, nu portul BMS: pe portul BMS invertorul comunică deja cu bateria. Lucrezi cu invertorul și bateria protejate, ca la orice intervenție în tablou.</div>
+      <div class="tip">Culorile sunt pentru un cablu sertizat T568B; verifică cu un tester sau un multimetru: pinul 1 este primul din stânga, cu clema mufei în jos.</div>
+    </div>
+  </section>
+
+  <!-- ================= 5 · JURNAL DE INSTALARE ================= -->
+  <section class="tab" id="t-fisa">
+    <div class="card">
+      <h2>Jurnal de validare · CONECTLAB-M03</h2>
+      <p class="tip">Notezi pe parcurs ce ai făcut și ce ai văzut. La final apeși Export JSON (sau Tipărește → PDF) și îi trimiți fișierul lui Florin: așa verificăm împreună ce e scris în ghid.</p>
+      <div class="grid2">
+        <div><label for="fNume">Numele tău și locul instalației</label><br><input id="fNume" style="width:100%"></div>
+        <div><label for="fGrupa">Data</label><br><input id="fGrupa" style="width:100%"></div>
+      </div>
+      <h3>Date tehnice</h3>
+      <label for="fGazda">Home Assistant și invertorul (gazdă, versiune, adresă, port serial, adresă Modbus)</label><br><input id="fGazda" style="width:100%" placeholder="ex. laptop HAOS, HA 2026.11, 192.168.1.x · invertor SPF 6000 ES Plus">
+      <h3>Varianta aleasă</h3>
+      <select id="fRoute"><option value="laptop">1 · HA pe laptop</option><option value="usb">2 · Cablu RS485 → USB</option><option value="esp">3 · ESP32 prin Wi-Fi</option></select>
+      <h3>Testul rapid al cablului (mbpoll)</h3>
+      <textarea id="fPred" placeholder="Ce a răspuns mbpoll la registrele 17 și 18 și ce arăta în același timp afișajul invertorului (tensiune baterie, SOC). Dacă a fost timeout: ce ai schimbat."></textarea>
+      <h3>Lista de verificare</h3>
+      <div id="fCheck"></div>
+      <h3>Capturi de ecran (ce se vede)</h3>
+      <label for="fC1">C1 – ecranul laptopului / Setări → Sistem → Hardware, cu portul serial sau placa ESPHome</label><textarea id="fC1"></textarea>
+      <label for="fC2">C2 – senzorii invertorului în Home Assistant (tensiune baterie, SOC, putere PV)</label><textarea id="fC2"></textarea>
+      <label for="fC3">C3 – cititorul Modbus din aplicație: o cerere și răspunsul ei decodat</label><textarea id="fC3"></textarea>
+      <h3>Defecte întâlnite (notate din fila 2)</h3>
+      <div id="fCazuri" style="font-size:.9rem;color:var(--muted)">—</div>
+      <h3>Observații</h3>
+      <textarea id="fConc" placeholder="Ce a mers, ce a dat eroare și cum ai rezolvat; ce e diferit față de ghid (meniuri, pași, registre, valori)."></textarea>
+      <div class="controls noprint">
+        <button class="primary" onclick="window.print()">🖨 Tipărește / Salvează PDF</button>
+        <button id="btnJson">⬇ Export JSON</button>
+        <label class="noprint"><button id="btnImp" type="button">⬆ Import JSON</button></label>
+        <input type="file" id="fileImp" accept=".json,application/json" style="display:none">
+        <button id="btnCsv2">⬇ Export CSV</button>
+      </div>
+      <div class="status" id="fisaStatus" role="status"></div>
+    </div>
+  </section>
+
+  <!-- ================= 6 · BREVIAR ================= -->
+  <section class="tab" id="t-brev">
+    <div class="card">
+      <h2>Breviar</h2>
+      <details open><summary>RS485 în două fraze</summary>
+        <p>RS485 transmite datele diferențial, pe două fire (A și B), ceea ce îl face rezistent la perturbații și potrivit pentru tablouri electrice. Pe linie vorbește pe rând câte un singur dispozitiv: masterul (Home Assistant sau ESP32) întreabă, sclavul (invertorul) răspunde.</p>
+      </details>
+      <details><summary>Cadrul Modbus RTU, funcția 04</summary>
+        <p>Cerere: <code>adresă · 04 · registru (2 octeți) · număr de registre (2 octeți) · CRC (2 octeți)</code>. Răspuns: <code>adresă · 04 · număr de octeți · date (2 octeți pe registru) · CRC</code>. CRC-ul (CRC-16/Modbus) se trimite cu octetul mic întâi; datele, cu octetul mare întâi. O valoare pe 32 de biți ocupă două registre: cuvântul mare apoi cuvântul mic.</p>
+      </details>
+      <details><summary>De la valoare brută la mărime fizică</summary>
+        <p>Invertorul trimite numere întregi. Mărimea fizică = valoare brută × scalare. Exemplu: registrul 17 = 5236 → 5236 × 0,01 = 52,36 V. Registrul 9–10 (32 biți) = 0 și 13856 → 13856 × 0,1 = 1385,6 W.</p>
+      </details>
+      <details><summary>Parametrii comunicației</summary>
+        <ul>
+          <li>9600 baud, 8 biți de date, fără paritate, 1 bit de stop (8N1).</li>
+          <li>Adresa invertorului: Programul 28 din meniul invertorului (implicit 1).</li>
+          <li>Între două cereri lași timp: protocolul Growatt cere cel puțin 850 ms; în Home Assistant, un interval de citire de 10–30 s este suficient.</li>
+          <li>Nu citi prea multe registre deodată: la 9600 baud, cererile mari pot bloca comunicația.</li>
+        </ul>
+      </details>
+      <details><summary>Home Assistant pe laptop: de reținut</summary>
+        <ul>
+          <li>Home Assistant OS șterge tot discul laptopului: salvează înainte tot ce ai nevoie.</li>
+          <li>Prima pornire se face pe cablu Ethernet; Wi-Fi-ul se configurează după, din Setări → Sistem → Rețea.</li>
+          <li>Bateria laptopului acoperă căderile scurte de tensiune, ca un UPS.</li>
+          <li>Dacă laptopul trebuie să rămână cu Windows, varianta este o mașină virtuală (modulul M01), cu adaptorul USB atașat mașinii virtuale.</li>
+        </ul>
+      </details>
+      <details><summary>Bibliografie și surse</summary>
+        <ul>
+          <li>Growatt – Manual SPF 6000 ES Plus (porturi, pinout RS485, Programul 28).</li>
+          <li>Home Assistant – Generic x86-64 (instalare cu Ubuntu live); integrarea Modbus (home-assistant.io).</li>
+          <li>Growatt Local – Homeassistant-Growatt-Local-Modbus (WouterTuinstra, GitHub): harta registrelor off-grid SPF.</li>
+          <li>Growatt Inverter Modbus RTU Protocol II V1.24 (proiectul grott): 9600 baud, 850 ms între cereri.</li>
+          <li>Waveshare ESP32-S3-RS485-CAN (docs.waveshare.com); pinii RS485 GPIO17/18/21 după esphome-yambms; ESPHome modbus_controller (esphome.io).</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  ConectLab EB104 · UPB · Facultatea de Inginerie Electrică · An universitar 2026–2027 · <span id="verFoot"></span><br>
+  Aplicația rulează local în browser; nu transmite date și nu trimite note.
+</footer>
+
+<script>
+  'use strict';
+
+  // ---------- constante ----------
+  const VERSION = '1.2';
+  const CODE = 'CONECTLAB-M03';
+
+  // ---------- bloc comun ----------
+  function $(id) { return document.getElementById(id); }
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  // valori generice afișate în pași (exemple tipice)
+  const V = {};
+
+  function fmt(v, d) { return Number(v).toFixed(d).replace('.', ','); }
+
+  function esc(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function status(id, msg) {
+    $(id).textContent = msg;
+    if (msg) { setTimeout(function () { if ($(id).textContent === msg) { $(id).textContent = ''; } }, 4000); }
+  }
+
+  function download(name, content, type) {
+    const blob = new Blob([content], { type: type });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  function nowStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function toCSV(rows) {
+    const head = ['CODE', 'VERSION', 'data_ora'];
+    const lines = [];
+    lines.push(head.concat(rows.header).join(';'));
+    rows.data.forEach(function (r) {
+      lines.push([CODE, VERSION, nowStr()].concat(r).map(function (c) {
+        return '"' + String(c).replace(/"/g, '""') + '"';
+      }).join(';'));
+    });
+    return '﻿' + lines.join('\n');
+  }
+
+  const LS_KEY = CODE + '-' + VERSION;
+
+  function saveLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(collect())); }
+    catch (e) { status('fisaStatus', 'Salvarea locală nu merge în acest browser – folosește Export JSON.'); }
+  }
+
+  function restoreLocal() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { apply(JSON.parse(raw), true); }
+    } catch (e) { /* ignorăm: pornim curat */ }
+  }
+
+  // ---------- stare ----------
+  const state = {
+    route: 'laptop',
+    fault: null,
+    cases: [],
+    log: []
+  };
+
+  // ---------- etape ----------
+  function routes(v) {
+    return {
+      laptop: {
+        name: 'Etapa 1 · HA pe laptop',
+        steps: [
+          { t: 'Pregătește laptopul', d: 'Salvezi tot ce ai pe laptop: discul va fi șters complet. Conectezi laptopul la router prin cablu Ethernet și la priză. În BIOS/UEFI (de obicei F2, F10, F12 sau Del la pornire): modul de pornire UEFI și Secure Boot dezactivat.', c: [], con: ['[bios] Boot mode: UEFI · Secure Boot: Disabled'] },
+          { t: 'Stick-ul cu Ubuntu', d: 'Pe alt calculator descarci Ubuntu Desktop (ubuntu.com/download/desktop) și îl scrii pe stick cu balenaEtcher sau Raspberry Pi Imager. Stick-ul se folosește doar pentru instalare: Ubuntu nu se instalează pe laptop.', c: ['https://ubuntu.com/download/desktop'], con: ['[etcher] ubuntu-desktop-amd64.iso scris pe stick ✓'] },
+          { t: 'Pornește Ubuntu de pe stick', d: 'Introduci stick-ul în laptop, pornești și alegi stick-ul din meniul de boot (F12 la majoritatea laptopurilor). În Ubuntu alegi „Try Ubuntu”, nu „Install”.', c: [], con: ['[ubuntu] Live session pornită · rețea Ethernet conectată'] },
+          { t: 'Test rapid al cablului RS485 (înainte de instalare)', d: 'Cât timp ești în Ubuntu de pe stick, verifici dacă invertorul tău răspunde. Cablul: pin 1 → B, pin 2 → A, mufa în portul RS485 al invertorului (nu în BMS); convertorul USB în laptop. Instalezi programul mbpoll, afli portul și citești registrele 17 și 18. Trebuie să primești două numere, de exemplu 5236 și 78 = 52,36 V și 78 %: compară-le cu afișajul invertorului și notează rezultatul în jurnal (fila 5). Dacă primești „timeout”: inversezi A și B; verifici adresa din Programul 28 (trebuie 1). Testul doar citește, nu schimbă nimic în invertor.', c: ['sudo add-apt-repository -y universe', 'sudo apt update', 'sudo apt install -y mbpoll', 'ls /dev/ttyUSB*', 'sudo mbpoll -m rtu -a 1 -b 9600 -P none -t 3 -0 -r 17 -c 2 /dev/ttyUSB0'], con: ['[mbpoll] -- Polling slave 1...', '[17]: 5236', '[18]: 78', '[ok] Invertorul răspunde: 52,36 V · SOC 78 %'] },
+          { t: 'Descarcă Home Assistant OS', d: 'În Firefox din Ubuntu deschizi pagina oficială de instalare Generic x86-64 și descarci imaginea haos_generic-x86-64-XX.X.img.xz (aproximativ 400 MB). Nu e nevoie s-o dezarhivezi.', c: ['https://www.home-assistant.io/installation/generic-x86-64'], con: ['[firefox] haos_generic-x86-64-XX.X.img.xz descărcat în Downloads'] },
+          { t: 'Scrie imaginea pe discul laptopului', d: 'Deschizi aplicația Disks (Discuri), selectezi discul intern al laptopului (NU stick-ul: verifică dimensiunea), meniul ⋮ → Restore Disk Image → alegi fișierul .img.xz → Start Restoring. Durează câteva minute. Ca verificare, comanda de mai jos arată discurile: discul intern este cel mare, fără RM=1.', c: ['lsblk -o NAME,SIZE,RM,MODEL'], con: ['[disks] Discul intern (ex. 256 GB) suprascris cu HAOS ✓'] },
+          { t: 'Prima pornire', d: 'Oprești laptopul, scoți stick-ul și pornești din nou. Pe ecran apare consola Home Assistant cu adresa de acces. Prima pornire durează câteva minute (descarcă ultima versiune).', c: [], con: ['[haos] Welcome to Home Assistant', '[i] http://homeassistant.local:8123  ·  http://192.168.1.x:8123'] },
+          { t: 'Onboarding, IP fix, backup', d: 'Din telefon sau din alt calculator deschizi adresa, creezi contul, locația și fusul orar. Rezervi IP-ul laptopului în router și faci primul backup (Setări → Sistem → Backup). Lași capacul deschis până verifici că laptopul nu intră în repaus la închiderea capacului.', c: ['http://homeassistant.local:8123'], con: ['[ha] Onboarding complet · IP rezervat · backup ✓'] }
+        ],
+        faults: {
+          secure: { b: 'Secure Boot activ', sym: ['[e] Laptopul nu pornește Home Assistant OS', '[e] Revine în meniul BIOS sau în Windows Boot Manager'], dx: 'Simptom: după scrierea imaginii, laptopul nu pornește Home Assistant. Cauză: Secure Boot activ sau modul Legacy/CSM. Remediu: în BIOS, UEFI activat și Secure Boot dezactivat.', at: 6, alt: { 0: ['[bios] Secure Boot: Enabled (neschimbat)'] } },
+          disk: { b: 'Imaginea scrisă pe stick', sym: ['[w] Ubuntu nu mai pornește de pe stick', '[e] Laptopul pornește tot sistemul vechi'], dx: 'Simptom: după repornire nu apare Home Assistant, iar stick-ul nu mai are Ubuntu. Cauză: în Disks a fost selectat stick-ul, nu discul intern. Remediu: refaci stick-ul Ubuntu și alegi discul intern după dimensiune și model (lsblk).', at: 6, alt: { 5: ['[disks] Imaginea scrisă pe: stick USB 16 GB'] } },
+          wifi: { b: 'Fără cablu Ethernet', sym: ['[haos] Nicio rețea configurată', '[e] homeassistant.local nu răspunde'], dx: 'Simptom: consola arată Home Assistant, dar adresa nu se deschide. Cauză: la prima pornire, Home Assistant OS nu are încă datele Wi-Fi. Remediu: cablu Ethernet sau adaptor USB–Ethernet la prima pornire; Wi-Fi-ul se adaugă apoi din Setări → Sistem → Rețea.', at: 6, alt: { 0: ['[bios] Boot mode: UEFI · Secure Boot: Disabled', '[w] Laptop fără cablu Ethernet'] } }
+        }
+      },
+      usb: {
+        name: 'Etapa 2 · Cablu RS485 → USB',
+        steps: [
+          { t: 'Verifică adresa în invertor', d: 'În meniul invertorului (ține ENTER 3 s), Programul 28 „Address setting (for expansion)”: lași 1 sau notezi valoarea. Este adresa Modbus (device_address).', c: [], con: ['[invertor] Program 28 = 1'] },
+          { t: 'Pregătește cablul', d: 'Un cablu UTP cu mufă RJ45 la un capăt; la celălalt capăt folosești doar firele de la pinul 1 (B) și pinul 2 (A). Pe un cablu T568B: pin 1 alb-portocaliu, pin 2 portocaliu. Verifici cu testerul sau multimetrul.', c: [], con: ['[cablu] pin 1 → B · pin 2 → A · verificat ✓'] },
+          { t: 'Leagă convertorul', d: 'Pin 1 (B) în borna B a convertorului, pin 2 (A) în borna A. GND rămâne liber (pinoutul invertorului nu are masă pe acest port). Mufa RJ45 intră în portul RS485 „for expansion” al invertorului, nu în portul BMS. Convertorul intră în laptop.', c: [], con: ['[usb] Convertor conectat · LED aprins'] },
+          { t: 'Găsește portul serial în Home Assistant', d: 'Setări → Sistem → Hardware → meniul ⋮ → Toate echipamentele: cauți un dispozitiv ttyUSB. Copiezi calea stabilă /dev/serial/by-id/… (nu se schimbă dacă muți convertorul în alt port USB). Sau, din Terminal & SSH:', c: ['ls -l /dev/serial/by-id/'], con: ['[ha] /dev/serial/by-id/usb-…-if00-port0 → ../../ttyUSB0'] },
+          { t: 'Configurația Modbus', d: 'Cu File editor deschizi configuration.yaml și adaugi blocul de mai jos (pui calea ta la port). Apoi Setări → Sistem → Repornire.', c: ['modbus:\n  - name: growatt\n    type: serial\n    port: /dev/serial/by-id/CALEA_TA\n    baudrate: 9600\n    bytesize: 8\n    method: rtu\n    parity: N\n    stopbits: 1\n    sensors:\n      - name: "Growatt tensiune baterie"\n        device_address: 1\n        input_type: input\n        address: 17\n        data_type: uint16\n        scale: 0.01\n        precision: 2\n        unit_of_measurement: V\n        device_class: voltage\n        state_class: measurement\n        scan_interval: 15\n      - name: "Growatt SOC baterie"\n        device_address: 1\n        input_type: input\n        address: 18\n        data_type: uint16\n        unit_of_measurement: "%"\n        device_class: battery\n        state_class: measurement\n        scan_interval: 30\n      - name: "Growatt putere PV1"\n        device_address: 1\n        input_type: input\n        address: 3\n        data_type: uint32\n        scale: 0.1\n        precision: 1\n        unit_of_measurement: W\n        device_class: power\n        state_class: measurement\n        scan_interval: 15\n      - name: "Growatt putere iesire"\n        device_address: 1\n        input_type: input\n        address: 9\n        data_type: uint32\n        scale: 0.1\n        precision: 1\n        unit_of_measurement: W\n        device_class: power\n        state_class: measurement\n        scan_interval: 15'], con: ['[ha] configuration.yaml valid · repornire'] },
+          { t: 'Verifică valorile', d: 'Setări → Entități, cauți „Growatt”. Compari cu afișajul invertorului: tensiunea bateriei și SOC trebuie să coincidă. Abia apoi adaugi și restul registrelor din fila 4.', c: [], con: ['[ha] sensor.growatt_tensiune_baterie = 52,36 V', '[ha] sensor.growatt_soc_baterie = 78 %', '[i] Valorile coincid cu afișajul invertorului ✓'] }
+        ],
+        faults: {
+          ab: { b: 'A și B inversate', sym: ['[modbus] growatt: No response received after 3 retries', '[e] Toate entitățile: unavailable'], dx: 'Simptom: niciun răspuns, deși totul pare conectat. Cauză: firele A și B inversate (pe linia diferențială, invertorul nu înțelege cererea). Remediu: inversezi firele la convertor. Nu se strică nimic: e prima verificare.', at: 5, alt: { 2: ['[usb] Convertor conectat · pin 1 → A, pin 2 → B'] } },
+          bms: { b: 'Mufa în portul BMS', sym: ['[modbus] No response received', '[w] Invertor: posibil avertisment de comunicație cu bateria'], dx: 'Simptom: niciun răspuns de la invertor. Cauză: mufa este în portul BMS, unde invertorul comunică deja cu bateria. Remediu: mufa în portul RS485 „for expansion”.', at: 5, alt: { 2: ['[usb] Mufă RJ45 în portul BMS'] } },
+          addr: { b: 'Adresă greșită', sym: ['[modbus] growatt: device 2 no response', '[e] Entități unavailable'], dx: 'Simptom: niciun răspuns. Cauză: device_address din configurație diferă de Programul 28 din invertor. Remediu: aceeași adresă în ambele locuri.', at: 5, alt: { 0: ['[invertor] Program 28 = 1 · în configurație: device_address 2'] } }
+        }
+      },
+      esp: {
+        name: 'Etapa 3 · ESP32 prin Wi-Fi',
+        steps: [
+          { t: 'Alimentarea plăcii', d: 'Placa Waveshare ESP32-S3-RS485-CAN se alimentează la borna de alimentare cu 7–36 V c.c. (ex. o sursă de 12 V pe șină) sau prin USB-C. Nu o legi direct la bateria de 48 V a invertorului: depășește 36 V.', c: [], con: ['[esp] Alimentare 12 V · LED PWR roșu aprins'] },
+          { t: 'Instalează app-ul ESPHome', d: 'În Home Assistant: Setări → Apps → Instalează app → ESPHome Device Builder → Install → Start → Open Web UI.', c: [], con: ['[esphome] Device Builder pornit'] },
+          { t: 'Primul firmware', d: 'Legi placa prin USB-C la laptopul cu Home Assistant (sau la orice calculator cu Chrome, prin web.esphome.io). În ESPHome: New Device → nume growatt-spf → ESP32-S3. Instalezi prima dată prin USB; după aceea actualizările merg prin Wi-Fi.', c: [], con: ['[esphome] growatt-spf: primul firmware scris prin USB ✓'] },
+          { t: 'Configurația RS485 și registrele', d: 'Editezi growatt-spf.yaml și adaugi sub secțiunile existente (esphome, esp32, wifi, api, ota) blocul de mai jos. Pinii RS485 ai plăcii: TX GPIO17, RX GPIO18; GPIO21 comandă direcția (flow_control_pin). Install → Wirelessly.', c: ['uart:\n  id: uart_rs485\n  tx_pin: GPIO17\n  rx_pin: GPIO18\n  baud_rate: 9600\n  stop_bits: 1\n  parity: NONE\n\nmodbus:\n  id: modbus_rs485\n  uart_id: uart_rs485\n  flow_control_pin: GPIO21\n\nmodbus_controller:\n  - id: growatt\n    address: 1\n    modbus_id: modbus_rs485\n    update_interval: 15s\n\nsensor:\n  - platform: modbus_controller\n    modbus_controller_id: growatt\n    name: "Tensiune baterie"\n    register_type: read\n    address: 17\n    value_type: U_WORD\n    unit_of_measurement: V\n    device_class: voltage\n    state_class: measurement\n    accuracy_decimals: 2\n    filters:\n      - multiply: 0.01\n  - platform: modbus_controller\n    modbus_controller_id: growatt\n    name: "SOC baterie"\n    register_type: read\n    address: 18\n    value_type: U_WORD\n    unit_of_measurement: "%"\n    device_class: battery\n    state_class: measurement\n  - platform: modbus_controller\n    modbus_controller_id: growatt\n    name: "Putere PV1"\n    register_type: read\n    address: 3\n    value_type: U_DWORD\n    unit_of_measurement: W\n    device_class: power\n    state_class: measurement\n    accuracy_decimals: 1\n    filters:\n      - multiply: 0.1'], con: ['[esphome] Compilare reușită · OTA prin Wi-Fi ✓'] },
+          { t: 'Leagă cablul la placă', d: 'Pin 1 (B) al mufei în borna B− a plăcii, pin 2 (A) în borna A+. Mufa în portul RS485 „for expansion”. LED-ul verde clipește la fiecare cerere, cel albastru la fiecare răspuns.', c: [], con: ['[esp] RS485: TX verde · RX albastru ✓'] },
+          { t: 'Adaugă dispozitivul în Home Assistant', d: 'Setări → Dispozitive și servicii: ESPHome „growatt-spf” apare descoperit → Configure. Senzorii apar automat; compari valorile cu afișajul invertorului.', c: [], con: ['[ha] ESPHome growatt-spf adăugat', '[ha] Tensiune baterie 52,36 V · SOC 78 % · Putere PV1 2150,0 W ✓'] }
+        ],
+        faults: {
+          flow: { b: 'Fără flow_control_pin', sym: ['[esphome] modbus_controller: no response from device 1', '[w] LED TX verde nu clipește niciodată'], dx: 'Simptom: placa nu trimite nimic, LED-ul verde nu clipește. Cauză: lipsește flow_control_pin: GPIO21, iar transceiverul rămâne în recepție. Remediu: adaugi linia în secțiunea modbus și reîncarci firmware-ul.', at: 4, alt: { 3: ['[esphome] Compilare reușită (modbus fără flow_control_pin)'] } },
+          v48: { b: 'Alimentare din bateria de 48 V', sym: ['[e] Bateria de 48 V depășește intrarea de 7–36 V a plăcii', '[e] Placa nu pornește / se poate distruge'], dx: 'Simptom: placa nu pornește. Cauză: tensiunea bateriei invertorului depășește domeniul de alimentare al plăcii (7–36 V). Remediu: sursă separată de 12 V sau 24 V ori alimentare prin USB-C.', at: 0 },
+          many: { b: 'Prea multe registre, prea des', sym: ['[w] modbus_controller: timeouts repetate', '[e] Senzori care sar între valoare și unavailable'], dx: 'Simptom: citiri intermitente. Cauză: la 9600 baud, prea multe registre citite prea des (update_interval mic, intervale mari de registre). Remediu: update_interval 15–30 s și doar registrele necesare.', at: 5 }
+        }
+      }
+    };
+  }
+
+  // ---------- randare pași ----------
+  function cmdBlock(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'cmd';
+    const pre = document.createElement('pre');
+    pre.textContent = text;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = 'Copiază';
+    b.addEventListener('click', function () {
+      const done = function () { b.textContent = 'Copiat ✓'; setTimeout(function () { b.textContent = 'Copiază'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { b.textContent = 'Selectează manual'; });
+      } else {
+        const r = document.createRange(); r.selectNodeContents(pre);
+        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        b.textContent = 'Ctrl+C';
+      }
+    });
+    wrap.appendChild(pre);
+    wrap.appendChild(b);
+    return wrap;
+  }
+
+  function renderSteps() {
+    const R = routes(V)[state.route];
+    const list = $('stepList');
+    list.innerHTML = '';
+    R.steps.forEach(function (s, i) {
+      const li = document.createElement('li');
+      li.id = 'st' + i;
+      const h = document.createElement('h4'); h.textContent = s.t;
+      const p = document.createElement('p'); p.textContent = s.d;
+      li.appendChild(h); li.appendChild(p);
+      s.c.forEach(function (c) { li.appendChild(cmdBlock(c)); });
+      list.appendChild(li);
+    });
+    const fb = $('faults');
+    fb.innerHTML = '';
+    Object.keys(R.faults).forEach(function (k) {
+      const b = document.createElement('button');
+      b.className = 'fault';
+      b.type = 'button';
+      b.textContent = (state.fault === k ? '● ' : '○ ') + R.faults[k].b;
+      b.addEventListener('click', function () {
+        state.fault = (state.fault === k) ? null : k;
+        resetSim();
+        renderSteps();
+        $('faultInfo').innerHTML = state.fault ? '<div class="danger">Defect activ: <b>' + esc(R.faults[k].b) + '</b>. Pornește simularea.</div>' : '';
+      });
+      fb.appendChild(b);
+    });
+  }
+
+  // ---------- simulare ----------
+  const sim = { playing: false, step: 0, line: 0, acc: 0, last: 0, failed: false, finished: false };
+
+  function conLine(txt) {
+    const div = document.createElement('div');
+    if (txt.indexOf('[e]') === 0) { div.className = 'e'; }
+    else if (txt.indexOf('[w]') === 0) { div.className = 'w'; }
+    else if (txt.indexOf('[i]') === 0) { div.className = 'i'; }
+    div.textContent = txt;
+    $('console').appendChild(div);
+    $('console').scrollTop = $('console').scrollHeight;
+    state.log.push([state.route, sim.step + 1, txt]);
+  }
+
+  function resetSim() {
+    sim.playing = false; sim.step = 0; sim.line = 0; sim.acc = 0; sim.failed = false; sim.finished = false;
+    $('console').innerHTML = '';
+    $('prog').style.width = '0';
+    state.log = [];
+    document.querySelectorAll('#stepList li').forEach(function (li) { li.className = ''; });
+  }
+
+  function tick(ts) {
+    if (!sim.playing) { return; }
+    if (!sim.last) { sim.last = ts; }
+    const dt = (ts - sim.last) * Number($('speed').value);
+    sim.last = ts;
+    sim.acc += dt;
+    if (sim.acc >= 900) {
+      sim.acc = 0;
+      advance();
+    }
+    if (sim.playing) { requestAnimationFrame(tick); }
+  }
+
+  function advance() {
+    const R = routes(V)[state.route];
+    const s = R.steps[sim.step];
+    const items = document.querySelectorAll('#stepList li');
+    items.forEach(function (li, i) {
+      if (i < sim.step) { li.className = 'done'; }
+      else if (i === sim.step) { li.className = 'now'; }
+    });
+    const f = state.fault ? R.faults[state.fault] : null;
+    if (f && sim.step === f.at && !sim.failed) {
+      if (sim.line < f.sym.length) {
+        conLine(f.sym[sim.line]); sim.line++; return;
+      }
+      sim.failed = true; sim.playing = false;
+      items[sim.step].className = 'err';
+      $('faultInfo').innerHTML = '<div class="danger"><b>Diagnostic:</b> ' + esc(f.dx) + '</div>';
+      status('bancStatus', 'Instalarea s-a oprit la pasul ' + (sim.step + 1) + '. Notează în jurnal.');
+      return;
+    }
+    const lines = (f && f.alt && f.alt[sim.step]) ? f.alt[sim.step] : s.con;
+    if (sim.line < lines.length) {
+      conLine(lines[sim.line]); sim.line++;
+    } else {
+      sim.step++; sim.line = 0;
+      $('prog').style.width = (100 * sim.step / R.steps.length) + '%';
+      if (sim.step >= R.steps.length) {
+        items.forEach(function (li) { li.className = 'done'; });
+        conLine('[i] ✓ ' + R.name + ' completă.');
+        sim.playing = false; sim.finished = true;
+        status('bancStatus', 'Etapă completă. Încearcă și un defect.');
+      }
+    }
+  }
+
+  function play() {
+    if (sim.failed || sim.finished) { resetSim(); }
+    if (sim.playing) { return; }
+    sim.playing = true; sim.last = 0;
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- diagrama arhitecturii ----------
+  function drawArch() {
+    document.querySelectorAll('#arcCols [data-g]').forEach(function (g) {
+      g.setAttribute('opacity', g.dataset.g === state.route ? '1' : '0.35');
+    });
+  }
+
+  // animatia pachetului pe sageata spre browser
+  let pktT = 0;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function animPkt() {
+    const path = $('flowA');
+    const L = path.getTotalLength();
+    pktT = (pktT + 0.008) % 1;
+    const p = path.getPointAtLength(pktT * L);
+    $('pkt').setAttribute('cx', p.x);
+    $('pkt').setAttribute('cy', p.y);
+    if (!reduce) { requestAnimationFrame(animPkt); }
+  }
+
+
+  // ---------- jurnal de instalare ----------
+  const CHECKS = [
+    'Home Assistant OS pornește de pe discul laptopului, fără stick',
+    'Onboarding făcut, IP rezervat, primul backup descărcat',
+    'Adresa Modbus verificată în Programul 28 al invertorului',
+    'Cablul: pin 1 → B, pin 2 → A, în portul RS485 (nu BMS)',
+    'Portul serial găsit (/dev/serial/by-id/…) sau placa ESPHome adăugată',
+    'Testul rapid cu mbpoll: invertorul răspunde la registrele 17 și 18',
+    'Tensiunea bateriei și SOC din Home Assistant coincid cu afișajul invertorului',
+    'Cel puțin o cerere și un răspuns decodate în cititorul Modbus'
+  ];
+
+  function renderFisa() {
+    const c = $('fCheck');
+    if (!c.children.length) {
+      CHECKS.forEach(function (t, i) {
+        const l = document.createElement('label'); l.className = 'check';
+        const x = document.createElement('input'); x.type = 'checkbox'; x.id = 'ck' + i;
+        x.addEventListener('change', saveLocal);
+        l.appendChild(x); l.appendChild(document.createTextNode(t));
+        c.appendChild(l);
+      });
+    }
+    $('fCazuri').innerHTML = state.cases.length
+      ? '<ul>' + state.cases.map(function (k) { return '<li>' + esc(k) + '</li>'; }).join('') + '</ul>'
+      : '—';
+  }
+
+  const FIELDS = ['fNume', 'fGrupa', 'fGazda', 'fPred', 'fC1', 'fC2', 'fC3', 'fConc'];
+
+  function collect() {
+    const o = { CODE: CODE, VERSION: VERSION, route: state.route, cases: state.cases, checks: [], fields: {}, date: nowStr() };
+    FIELDS.forEach(function (f) { o.fields[f] = $(f).value; });
+    CHECKS.forEach(function (_, i) { o.checks.push(!!($('ck' + i) && $('ck' + i).checked)); });
+    return o;
+  }
+
+  function apply(o, silent) {
+    if (!o || o.CODE !== CODE || typeof o.fields !== 'object') {
+      if (!silent) { status('fisaStatus', 'Fișierul nu este un jurnal ' + CODE + '. Import respins.'); }
+      return false;
+    }
+    if (o.VERSION !== VERSION && !silent) { status('fisaStatus', 'Atenție: jurnalul e din versiunea ' + o.VERSION + ', aplicația e ' + VERSION + '.'); }
+    if (['laptop', 'usb', 'esp'].indexOf(o.route) >= 0) { setRoute(o.route); }
+    state.cases = Array.isArray(o.cases) ? o.cases.map(String).slice(0, 30) : [];
+    FIELDS.forEach(function (f) { if (typeof o.fields[f] === 'string') { $(f).value = o.fields[f]; } });
+    renderFisa();
+    if (Array.isArray(o.checks)) { o.checks.forEach(function (c, i) { if ($('ck' + i)) { $('ck' + i).checked = !!c; } }); }
+    return true;
+  }
+
+  // ---------- traseu ----------
+  function setRoute(r) {
+    state.route = r;
+    state.fault = null;
+    $('routeSel').value = r;
+    $('fRoute').value = r;
+    $('faultInfo').innerHTML = '';
+    document.querySelectorAll('.route').forEach(function (el) { el.classList.toggle('sel', el.dataset.r === r); });
+    drawArch();
+    resetSim();
+    renderSteps();
+  }
+
+  // ---------- evenimente ----------
+  document.querySelectorAll('#tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.remove('active'); });
+      document.querySelectorAll('section.tab').forEach(function (s) { s.classList.remove('active'); });
+      b.classList.add('active');
+      $(b.dataset.t).classList.add('active');
+      if (b.dataset.t === 't-fisa') { renderFisa(); }
+    });
+  });
+  document.querySelectorAll('.route').forEach(function (el) {
+    el.addEventListener('click', function () { setRoute(el.dataset.r); saveLocal(); });
+  });
+  $('routeSel').addEventListener('change', function () { setRoute(this.value); saveLocal(); });
+  $('fRoute').addEventListener('change', function () { setRoute(this.value); saveLocal(); });
+  $('btnPlay').addEventListener('click', play);
+  $('btnPause').addEventListener('click', function () { sim.playing = false; });
+  $('btnReset').addEventListener('click', resetSim);
+  $('btnNote').addEventListener('click', function () {
+    const R = routes(V)[state.route];
+    let t = R.name + ': ';
+    if (sim.failed && state.fault) { t += 'defect „' + R.faults[state.fault].b + '” la pasul ' + (sim.step + 1) + ' – ' + R.faults[state.fault].dx; }
+    else if (sim.finished) { t += 'etapă completă, fără defect'; }
+    else { status('bancStatus', 'Rulează simularea până la capăt sau până la defect, apoi notează.'); return; }
+    state.cases.push(t);
+    renderFisa();
+    saveLocal();
+    status('bancStatus', 'Notat în jurnal (' + state.cases.length + ').');
+  });
+  $('btnCsv').addEventListener('click', function () {
+    if (!state.log.length) { status('bancStatus', 'Jurnalul e gol: pornește simularea întâi.'); return; }
+    download(CODE + '_jurnal.csv', toCSV({ header: ['etapa', 'pas', 'mesaj'], data: state.log }), 'text/csv;charset=utf-8');
+  });
+  $('btnCsv2').addEventListener('click', function () {
+    const o = collect();
+    const rows = [['etapa', o.route]];
+    FIELDS.forEach(function (f) { rows.push([f, o.fields[f]]); });
+    CHECKS.forEach(function (t, i) { rows.push([t, o.checks[i] ? 'da' : 'nu']); });
+    o.cases.forEach(function (c, i) { rows.push(['caz ' + (i + 1), c]); });
+    download(CODE + '_jurnal_validare.csv', toCSV({ header: ['camp', 'valoare'], data: rows }), 'text/csv;charset=utf-8');
+  });
+  $('btnJson').addEventListener('click', function () {
+    download(CODE + '_jurnal_validare.json', JSON.stringify(collect(), null, 2), 'application/json');
+  });
+  $('btnImp').addEventListener('click', function () { $('fileImp').click(); });
+  $('fileImp').addEventListener('change', function () {
+    const f = this.files[0];
+    if (!f) { return; }
+    const rd = new FileReader();
+    rd.onload = function () {
+      try {
+        if (apply(JSON.parse(rd.result), false)) { renderFisa(); saveLocal(); status('fisaStatus', 'Jurnal importat.'); }
+      } catch (e) { status('fisaStatus', 'Fișier JSON invalid. Import respins.'); }
+    };
+    rd.readAsText(f);
+    this.value = '';
+  });
+  FIELDS.forEach(function (f) { $(f).addEventListener('input', saveLocal); });
+
+  // ---------- cititor Modbus ----------
+  const MB_REGS = [
+    { r: 0, n: 'Starea invertorului', c: 1, sc: 1, u: '', raw: [5], note: '5 = încărcare din PV' },
+    { r: 1, n: 'Tensiune PV1', c: 1, sc: 0.1, u: 'V', raw: [3124] },
+    { r: 2, n: 'Tensiune PV2', c: 1, sc: 0.1, u: 'V', raw: [2987] },
+    { r: 3, n: 'Putere PV1 (32 biți)', c: 2, sc: 0.1, u: 'W', raw: [0, 21500] },
+    { r: 5, n: 'Putere PV2 (32 biți)', c: 2, sc: 0.1, u: 'W', raw: [0, 18320] },
+    { r: 9, n: 'Putere activă ieșire (32 biți)', c: 2, sc: 0.1, u: 'W', raw: [0, 13856] },
+    { r: 17, n: 'Tensiune baterie', c: 1, sc: 0.01, u: 'V', raw: [5236] },
+    { r: 18, n: 'SOC baterie', c: 1, sc: 1, u: '%', raw: [78] },
+    { r: 20, n: 'Tensiune rețea', c: 1, sc: 0.1, u: 'V', raw: [2312] },
+    { r: 21, n: 'Frecvență rețea', c: 1, sc: 0.01, u: 'Hz', raw: [5000] },
+    { r: 22, n: 'Tensiune ieșire', c: 1, sc: 0.1, u: 'V', raw: [2301] },
+    { r: 25, n: 'Temperatură invertor', c: 1, sc: 0.1, u: '°C', raw: [415] },
+    { r: 27, n: 'Încărcare (sarcină)', c: 1, sc: 0.1, u: '%', raw: [231] }
+  ];
+
+  function crc16(bytes) {
+    let crc = 0xFFFF;
+    bytes.forEach(function (b) {
+      crc ^= b;
+      for (let i = 0; i < 8; i++) {
+        crc = (crc & 1) ? ((crc >> 1) ^ 0xA001) : (crc >> 1);
+      }
+    });
+    return crc;
+  }
+  function hx(b) { return (b < 16 ? '0' : '') + b.toString(16).toUpperCase(); }
+  function byteRow(items) {
+    return '<table style="font-family:Consolas,monospace;font-size:.85rem"><tr>' + items.map(function (it) {
+      return '<td style="text-align:center;color:' + it.c + '"><b>' + hx(it.b) + '</b><br><span style="font-size:.7rem;color:#9fb3c8">' + esc(it.l) + '</span></td>';
+    }).join('') + '</tr></table>';
+  }
+
+  function mbSend() {
+    const reg = MB_REGS[Number($('mbReg').value)];
+    const addr = Number($('mbAddr').value);
+    const inv = Number($('mbInv').value);
+    if (!Number.isInteger(addr) || addr < 1 || addr > 247) { status('mbStatus', 'Adresa sclavului: 1…247.'); return; }
+    const req = [addr, 0x04, reg.r >> 8, reg.r & 0xFF, 0, reg.c];
+    const crc = crc16(req);
+    const reqB = req.concat([crc & 0xFF, crc >> 8]);
+    const lab = ['adresă', 'funcția 04', 'reg. mare', 'reg. mic', 'nr. mare', 'nr. mic', 'CRC mic', 'CRC mare'];
+    const col = ['#18bcf2', '#ff9f43', '#2ecc71', '#2ecc71', '#b388ff', '#b388ff', '#ffd166', '#ffd166'];
+    $('mbReq').innerHTML = byteRow(reqB.map(function (b, i) { return { b: b, l: lab[i], c: col[i] }; })) +
+      '<div style="margin-top:6px">Citește ' + reg.c + ' registru(e) de la adresa ' + reg.r + ' a sclavului ' + addr + ' · CRC-16/Modbus = 0x' + hx(crc >> 8) + hx(crc & 0xFF) + '</div>';
+    if ($('mbSwap').checked) {
+      $('mbResp').innerHTML = '<span class="e">… timeout: niciun răspuns după 1 s</span>';
+      $('mbDecode').className = 'danger';
+      $('mbDecode').textContent = 'Firele A și B sunt inversate: pe linia diferențială invertorul primește semnalul negat și nu recunoaște cererea. Inversează firele la convertor.';
+      return;
+    }
+    if ($('mbBaud').value !== '9600') {
+      $('mbResp').innerHTML = '<span class="e">… timeout: niciun răspuns (sau octeți fără sens)</span>';
+      $('mbDecode').className = 'danger';
+      $('mbDecode').textContent = 'Viteza nu corespunde: invertorul comunică la 9600 baud, 8N1. La altă viteză nu înțelege cererea.';
+      return;
+    }
+    if (addr !== inv) {
+      $('mbResp').innerHTML = '<span class="e">… timeout: niciun dispozitiv cu adresa ' + addr + '</span>';
+      $('mbDecode').className = 'danger';
+      $('mbDecode').textContent = 'Adresa din cerere (' + addr + ') diferă de adresa setată în invertor la Programul 28 (' + inv + '). Invertorul ignoră cererile care nu îi sunt adresate.';
+      return;
+    }
+    const data = [];
+    reg.raw.forEach(function (w) { data.push(w >> 8, w & 0xFF); });
+    const resp = [addr, 0x04, data.length].concat(data);
+    const c2 = crc16(resp);
+    const respB = resp.concat([c2 & 0xFF, c2 >> 8]);
+    const rl = ['adresă', 'funcția 04', 'nr. octeți'];
+    const rc = ['#18bcf2', '#ff9f43', '#b388ff'];
+    for (let i = 0; i < data.length; i++) { rl.push('date ' + (i % 2 ? 'mic' : 'mare')); rc.push('#2ecc71'); }
+    rl.push('CRC mic', 'CRC mare'); rc.push('#ffd166', '#ffd166');
+    $('mbResp').innerHTML = byteRow(respB.map(function (b, i) { return { b: b, l: rl[i], c: rc[i] }; }));
+    let rawVal, steps;
+    if (reg.c === 2) {
+      const hi = reg.raw[0], lo = reg.raw[1];
+      if ($('mbWord').checked) {
+        rawVal = lo * 65536 + hi;
+        steps = 'Cuvinte citite inversat: ' + lo + ' × 65536 + ' + hi + ' = ' + rawVal + ' → × ' + scs(reg.sc) + ' = ' + fmt(rawVal * reg.sc, 1) + ' ' + reg.u + '. Valoare absurdă: ordinea corectă este cuvântul mare întâi.';
+        $('mbDecode').className = 'danger';
+      } else {
+        rawVal = hi * 65536 + lo;
+        steps = 'Cuvânt mare = ' + hi + ', cuvânt mic = ' + lo + ' → ' + hi + ' × 65536 + ' + lo + ' = ' + rawVal + ' → × ' + scs(reg.sc) + ' = <b>' + fmt(rawVal * reg.sc, 1) + ' ' + reg.u + '</b>';
+        $('mbDecode').className = 'tip';
+      }
+    } else {
+      rawVal = reg.raw[0];
+      const dec = reg.sc === 0.01 ? 2 : (reg.sc === 0.1 ? 1 : 0);
+      steps = 'Octet mare 0x' + hx(rawVal >> 8) + ', octet mic 0x' + hx(rawVal & 0xFF) + ' → 0x' + hx(rawVal >> 8) + hx(rawVal & 0xFF) + ' = ' + rawVal + ' → × ' + scs(reg.sc) + ' = <b>' + fmt(rawVal * reg.sc, dec) + (reg.u ? ' ' + reg.u : '') + '</b>' + (reg.note ? ' (' + esc(reg.note) + ')' : '');
+      $('mbDecode').className = 'tip';
+    }
+    $('mbDecode').innerHTML = esc(reg.n) + ': ' + steps + '<br><span style="color:var(--muted);font-size:.85rem">CRC verificat: 0x' + hx(c2 >> 8) + hx(c2 & 0xFF) + ' ✓ (valori simulate, tipice pentru amiază)</span>';
+    state.log.push(['modbus', reg.r, hexStr(reqB) + ' → ' + hexStr(respB)]);
+  }
+  function hexStr(a) { return a.map(hx).join(' '); }
+  function scs(x) { return String(x).replace('.', ','); }
+
+  (function initMB() {
+    const sel = $('mbReg');
+    MB_REGS.forEach(function (r, i) {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = r.r + (r.c === 2 ? '–' + (r.r + 1) : '') + ' · ' + r.n;
+      sel.appendChild(o);
+    });
+    sel.value = 6;
+    $('mbSend').addEventListener('click', mbSend);
+  })();
+
+  // ---------- pornire ----------
+  $('verFoot').textContent = CODE + ' · v' + VERSION;
+  setRoute('laptop');
+  restoreLocal();
+  renderFisa();
+  drawArch();
+  animPkt();
+</script>
+</body>
+</html>
