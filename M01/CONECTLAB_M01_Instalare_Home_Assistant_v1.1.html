@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConectLab · M01 · Instalarea Home Assistant</title>
+<style>
+  :root {
+    --bg: #0b1724;
+    --panel: #12243a;
+    --panel2: #183050;
+    --ink: #e7f0fa;
+    --muted: #9fb3c8;
+    --ha: #18bcf2;
+    --ha-dark: #0b7fb0;
+    --acc: #ff9f43;
+    --ok: #2ecc71;
+    --bad: #ff5c5c;
+    --warn: #ffd166;
+    --line: #2a4566;
+    --code: #07111b;
+    --rpi: #c51a4a;
+    --vmw: #7f56d9;
+    --pve: #e57000;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(120deg, #0b1724 0%, #10345a 60%, #0b7fb0 100%);
+    padding: 18px 20px 14px;
+    border-bottom: 3px solid var(--ha);
+  }
+  header .tag { color: var(--ha); font-weight: 700; letter-spacing: .08em; font-size: .8rem; }
+  header h1 { margin: 4px 0 2px; font-size: 1.6rem; }
+  header p { margin: 0; color: var(--muted); font-size: .92rem; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  input, select, textarea {
+    background: var(--code); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 8px; font: inherit;
+  }
+  textarea { width: 100%; min-height: 70px; }
+  button {
+    background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 7px; padding: 7px 12px; font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: var(--ha); }
+  button.primary { background: var(--ha-dark); border-color: var(--ha); }
+  button.fault { border-color: var(--bad); color: #ffd0d0; }
+  nav.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 14px; }
+  nav.tabs button { border-radius: 20px; }
+  nav.tabs button.active { background: var(--ha); color: #04121e; font-weight: 700; }
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+  .card h2 { margin-top: 0; font-size: 1.2rem; color: var(--ha); }
+  .card h3 { margin: 14px 0 6px; font-size: 1.02rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .route {
+    border-radius: 12px; padding: 14px; border: 2px solid var(--line);
+    background: var(--panel2); cursor: pointer; transition: transform .15s;
+  }
+  .route:hover { transform: translateY(-2px); }
+  .route.sel { border-color: var(--ha); box-shadow: 0 0 0 3px rgba(24,188,242,.25); }
+  .route .ico { font-size: 1.7rem; }
+  .route b { display: block; font-size: 1.05rem; }
+  .route small { color: var(--muted); }
+  .r-rpi { border-left: 6px solid var(--rpi); }
+  .r-vmw { border-left: 6px solid var(--vmw); }
+  .r-pve { border-left: 6px solid var(--pve); }
+  .steps { list-style: none; padding: 0; margin: 0; counter-reset: st; }
+  .steps li {
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 10px 48px;
+    margin-bottom: 8px; position: relative; background: #0f2034;
+  }
+  .steps li::before {
+    counter-increment: st; content: counter(st);
+    position: absolute; left: 12px; top: 10px; width: 26px; height: 26px;
+    border-radius: 50%; background: var(--line); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .steps li.done::before { background: var(--ok); color: #04121e; content: "✓"; }
+  .steps li.now { border-color: var(--ha); }
+  .steps li.now::before { background: var(--ha); color: #04121e; }
+  .steps li.err { border-color: var(--bad); }
+  .steps li.err::before { background: var(--bad); content: "!"; }
+  .steps li h4 { margin: 0 0 4px; font-size: 1rem; }
+  .steps li p { margin: 4px 0; color: #cfdceb; font-size: .93rem; }
+  .cmd { position: relative; margin: 6px 0; }
+  .cmd pre {
+    background: var(--code); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 70px 10px 12px; margin: 0; overflow-x: auto;
+    font-family: Consolas, "Courier New", monospace; font-size: .86rem; color: #bdf3c4;
+    white-space: pre;
+  }
+  .cmd button { position: absolute; top: 6px; right: 6px; padding: 3px 8px; font-size: .78rem; }
+  .tip { border-left: 4px solid var(--warn); background: rgba(255,209,102,.08); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: .9rem; }
+  .danger { border-left: 4px solid var(--bad); background: rgba(255,92,92,.08); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: .9rem; }
+  .console {
+    background: #000; color: #9cf59c; font-family: Consolas, monospace; font-size: .82rem;
+    border-radius: 8px; padding: 10px; height: 230px; overflow-y: auto; border: 1px solid var(--line);
+  }
+  .console .e { color: #ff7b7b; }
+  .console .w { color: var(--warn); }
+  .console .i { color: #8fd8ff; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  .bar { height: 10px; background: var(--code); border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--ha-dark), var(--ha)); transition: width .3s; }
+  svg text { font-family: "Segoe UI", Arial, sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { border: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--panel2); }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; }
+  .p-ok { background: rgba(46,204,113,.2); color: var(--ok); }
+  .p-mid { background: rgba(255,209,102,.18); color: var(--warn); }
+  .p-bad { background: rgba(255,92,92,.18); color: var(--bad); }
+  .q { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .q label { display: block; padding: 3px 0; cursor: pointer; }
+  .q .fb { font-size: .9rem; margin-top: 4px; }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; background: #0f2034; }
+  summary { cursor: pointer; font-weight: 700; color: var(--ha); }
+  .status { min-height: 1.4em; color: var(--warn); font-size: .9rem; }
+  .check { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; }
+  footer { color: var(--muted); font-size: .82rem; text-align: center; padding: 18px 10px 30px; }
+  @media (max-width: 760px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.3rem; }
+  }
+  @media print {
+    body { background: #fff; color: #000; }
+    .noprint, nav.tabs, header { display: none !important; }
+    section.tab { display: none !important; }
+    section#t-fisa { display: block !important; }
+    .card { border: 1px solid #999; background: #fff; color: #000; }
+    .card h2 { color: #000; }
+    input, textarea { background: #fff; color: #000; border: 1px solid #999; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .route { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="tag">CONECTLAB EB104 · MODUL COMUN M01</div>
+    <h1>Instalarea Home Assistant: Raspberry Pi · VMware · Proxmox</h1>
+    <p>Pas de început pentru cursuri (SMMeH, MDoEE) și pentru lucrările de licență/disertație · UPB, Facultatea de Inginerie Electrică</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="tabs noprint" id="tabs">
+    <button data-t="t-start" class="active">1 · Începe aici</button>
+    <button data-t="t-banc">2 · Banc virtual de instalare</button>
+    <button data-t="t-comp">3 · Comparație</button>
+    <button data-t="t-test">4 · Mini-test</button>
+    <button data-t="t-fisa">5 · Fișa studentului</button>
+    <button data-t="t-brev">6 · Breviar</button>
+  </nav>
+
+  <!-- ================= 1 · ÎNCEPE AICI ================= -->
+  <section class="tab active" id="t-start">
+    <div class="card">
+      <h2>Ce faci în acest modul</h2>
+      <p>Instalezi <b>Home Assistant OS (HAOS)</b>, platforma open-source pe care laboratorul o folosește ca SCADA ușor: tablourile T0x, dashboardurile, senzorii ESP32 și MQTT. Alegi <b>una dintre trei gazde</b>, iar la final ai o instanță funcțională, accesibilă din rețea, cu adresă fixă și backup.</p>
+      <div class="grid3" id="routePick">
+        <div class="route r-rpi" data-r="rpi"><div class="ico">🍓</div><b>Raspberry Pi</b><small>Placă dedicată, consum mic. Cea mai simplă pornire.</small></div>
+        <div class="route r-vmw" data-r="vmw"><div class="ico">💻</div><b>VMware Workstation</b><small>Pe laptopul tău, ca mașină virtuală. Bună pentru exerciții.</small></div>
+        <div class="route r-pve" data-r="pve"><div class="ico">🖥️</div><b>Server Proxmox</b><small>Varianta de producție: snapshot, backup, alte servicii alături.</small></div>
+      </div>
+      <p style="margin-top:10px" class="tip">Alege traseul aici sau în fila 2. Pe serverul Proxmox al laboratorului folosești ID-ul VM și numele primite de la cadrul didactic; acasă le alegi tu.</p>
+    </div>
+
+    <div class="card">
+      <h2>Arhitectura: ce se instalează, de fapt</h2>
+      <svg viewBox="0 0 900 330" width="100%" role="img" aria-label="Straturile unei instalări Home Assistant OS pe cele trei gazde">
+        <defs>
+          <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#18bcf2"/>
+          </marker>
+        </defs>
+        <!-- trei coloane -->
+        <g id="arcCols"></g>
+        <!-- browser -->
+        <rect x="700" y="20" width="180" height="70" rx="10" fill="#183050" stroke="#18bcf2"/>
+        <text x="790" y="50" fill="#e7f0fa" text-anchor="middle" font-size="15" font-weight="700">Browser / aplicație</text>
+        <text x="790" y="72" fill="#9fb3c8" text-anchor="middle" font-size="13">http://IP:8123</text>
+        <rect x="700" y="130" width="180" height="70" rx="10" fill="#183050" stroke="#ff9f43"/>
+        <text x="790" y="160" fill="#e7f0fa" text-anchor="middle" font-size="15" font-weight="700">Dispozitive</text>
+        <text x="790" y="182" fill="#9fb3c8" text-anchor="middle" font-size="13">ESP32 · MQTT · Wi-Fi</text>
+        <rect x="700" y="240" width="180" height="70" rx="10" fill="#183050" stroke="#2ecc71"/>
+        <text x="790" y="270" fill="#e7f0fa" text-anchor="middle" font-size="15" font-weight="700">Router LAN</text>
+        <text x="790" y="292" fill="#9fb3c8" text-anchor="middle" font-size="13">rezervare DHCP</text>
+        <path id="flowA" d="M640,120 C670,120 670,55 700,55" stroke="#18bcf2" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+        <path d="M640,170 L700,165" stroke="#ff9f43" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+        <path d="M640,220 C670,220 670,275 700,275" stroke="#2ecc71" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+        <circle id="pkt" r="6" fill="#18bcf2"/>
+      </svg>
+      <p style="color:var(--muted);font-size:.9rem">Același HAOS (Supervisor + Core + add-on-uri) rulează identic pe toate cele trei gazde. Diferă doar stratul de jos: placa (Pi) sau hipervizorul (VMware, Proxmox).</p>
+    </div>
+
+    <div class="card">
+      <h2>Parcurs în 120 de minute</h2>
+      <table>
+        <tr><th>Min.</th><th>Ce faci</th></tr>
+        <tr><td>0–15</td><td>Citești arhitectura și alegi traseul.</td></tr>
+        <tr><td>15–30</td><td>Parcurgi traseul în bancul virtual și declanșezi cel puțin două defecte.</td></tr>
+        <tr><td>30–90</td><td>Instalarea reală pe gazda primită (Pi din laborator, laptopul tău sau VM pe serverul laboratorului).</td></tr>
+        <tr><td>90–105</td><td>Onboarding, IP fix, primul backup.</td></tr>
+        <tr><td>105–120</td><td>Mini-test și fișa (capturile C1–C3), export PDF/JSON.</td></tr>
+      </table>
+      <h3>Ce predai</h3>
+      <p>Fișa din fila 5, ca PDF (Tipărește → Salvează PDF), cu cele trei capturi descrise și testul rezolvat.</p>
+    </div>
+  </section>
+
+  <!-- ================= 2 · BANC VIRTUAL ================= -->
+  <section class="tab" id="t-banc">
+    <div class="card">
+      <h2>Banc virtual de instalare</h2>
+      <div class="controls">
+        <label for="routeSel">Traseu:</label>
+        <select id="routeSel">
+          <option value="rpi">Raspberry Pi</option>
+          <option value="vmw">VMware Workstation</option>
+          <option value="pve">Proxmox VE</option>
+        </select>
+        <button class="primary" id="btnPlay">▶ Pornește simularea</button>
+        <button id="btnPause">⏸ Pauză</button>
+        <button id="btnReset">⟲ Reset</button>
+        <label for="speed">Viteză</label>
+        <select id="speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select>
+      </div>
+      <div class="bar"><div id="prog"></div></div>
+      <p style="color:var(--muted);font-size:.88rem;margin:6px 0">Simularea arată ce vezi pe ecran la fiecare pas. Nu este o instalare reală.</p>
+      <div class="grid2">
+        <div>
+          <h3>Pași (comenzile se copiază cu „Copiază”)</h3>
+          <ol class="steps" id="stepList"></ol>
+        </div>
+        <div>
+          <h3>Consolă / ecranul gazdei</h3>
+          <div class="console" id="console" aria-live="polite"></div>
+          <h3>Butoane de defect</h3>
+          <p style="font-size:.88rem;color:var(--muted);margin:2px 0 6px">Apasă un defect, apoi pornește simularea: vezi simptomul și diagnosticul.</p>
+          <div class="controls" id="faults"></div>
+          <div id="faultInfo"></div>
+          <div class="controls">
+            <button id="btnNote">📝 Notează cazul în fișă</button>
+            <button id="btnCsv">⬇ Export CSV jurnal</button>
+          </div>
+          <div class="status" id="bancStatus" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3 · COMPARAȚIE ================= -->
+  <section class="tab" id="t-comp">
+    <div class="card">
+      <h2>Care gazdă, pentru ce?</h2>
+      <table>
+        <tr><th>Criteriu</th><th>🍓 Raspberry Pi</th><th>💻 VMware Workstation</th><th>🖥️ Proxmox VE</th></tr>
+        <tr><td>Imagine HAOS</td><td>RPi 4/400 sau RPi 5 (din Raspberry Pi Imager)</td><td>.vmdk (VMware Workstation)</td><td>.qcow2 (KVM), adusă automat de script</td></tr>
+        <tr><td>Dificultate</td><td><span class="pill p-ok">mică</span></td><td><span class="pill p-mid">medie (EFI, rețea)</span></td><td><span class="pill p-mid">medie</span>, după ce Proxmox e instalat</td></tr>
+        <tr><td>Funcționare 24/7</td><td><span class="pill p-ok">da</span>, consum de câțiva wați</td><td><span class="pill p-bad">nu</span>, se oprește odată cu laptopul</td><td><span class="pill p-ok">da</span></td></tr>
+        <tr><td>Snapshot înainte de update</td><td><span class="pill p-bad">nu</span> (doar backup HA)</td><td><span class="pill p-ok">da</span></td><td><span class="pill p-ok">da</span> + backup programat al VM</td></tr>
+        <tr><td>Stocare</td><td>card SD (se uzează) sau, mai bine, SSD</td><td>discul laptopului</td><td>SSD-ul serverului</td></tr>
+        <tr><td>USB (Zigbee etc.)</td><td>direct</td><td>conectezi stick-ul la VM</td><td>USB passthrough către VM</td></tr>
+        <tr><td>Alte servicii pe aceeași mașină</td><td>doar add-on-uri HA</td><td>tot ce rulează laptopul</td><td>containere/VM separate (MQTT, Uptime Kuma, web)</td></tr>
+        <tr><td>Recomandat pentru</td><td>acasă, un tablou, prima instalare</td><td>exerciții, testat fără risc</td><td>laborator, producție, licențe care rulează luni de zile</td></tr>
+      </table>
+      <div class="tip" style="margin-top:10px">Pentru licență: începi pe VMware sau Pi și muți instanța pe Proxmox prin <b>backup → restore la onboarding</b>. Pașii sunt la finalul traseului Proxmox.</div>
+    </div>
+  </section>
+
+  <!-- ================= 4 · MINI-TEST ================= -->
+  <section class="tab" id="t-test">
+    <div class="card">
+      <h2>Mini-test (8 întrebări)</h2>
+      <div id="quiz"></div>
+      <div class="controls"><button class="primary" id="btnQuiz">Verifică răspunsurile</button><span id="quizScore" class="status" role="status"></span></div>
+    </div>
+  </section>
+
+  <!-- ================= 5 · FIȘA ================= -->
+  <section class="tab" id="t-fisa">
+    <div class="card">
+      <h2>Fișa studentului · CONECTLAB-M01</h2>
+      <div class="grid2">
+        <div><label for="fNume">Nume și prenume</label><br><input id="fNume" style="width:100%"></div>
+        <div><label for="fGrupa">Grupa / disciplina sau tema de licență</label><br><input id="fGrupa" style="width:100%"></div>
+      </div>
+      <h3>Date de lucru</h3>
+      <label for="fGazda">Gazda folosită, nume și ID VM (dacă e cazul), adresa IP rezervată</label><br><input id="fGazda" style="width:100%" placeholder="ex. Proxmox laborator, VM 100, homeassistant, 192.168.1.x">
+      <h3>Traseul ales</h3>
+      <select id="fRoute"><option value="rpi">Raspberry Pi</option><option value="vmw">VMware Workstation</option><option value="pve">Proxmox VE</option></select>
+      <h3>Predicție (înainte de instalare)</h3>
+      <textarea id="fPred" placeholder="Cât crezi că durează prima pornire? Ce adresă IP va primi HA și de ce?"></textarea>
+      <h3>Lista de verificare</h3>
+      <div id="fCheck"></div>
+      <h3>Capturi de ecran (descrie ce se vede)</h3>
+      <label for="fC1">C1 – consola gazdei cu adresa HA afișată</label><textarea id="fC1"></textarea>
+      <label for="fC2">C2 – Setări → Sistem → Rețea, cu IP-ul fix</label><textarea id="fC2"></textarea>
+      <label for="fC3">C3 – Setări → Sistem → Backup, cu primul backup creat</label><textarea id="fC3"></textarea>
+      <h3>Cazuri notate din bancul virtual</h3>
+      <div id="fCazuri" style="font-size:.9rem;color:var(--muted)">—</div>
+      <h3>Concluzii</h3>
+      <textarea id="fConc" placeholder="Ce a mers, ce a dat eroare și cum ai rezolvat; ce gazdă ai alege pentru proiectul tău și de ce."></textarea>
+      <div class="controls noprint">
+        <button class="primary" onclick="window.print()">🖨 Tipărește / Salvează PDF</button>
+        <button id="btnJson">⬇ Export JSON</button>
+        <label class="noprint"><button id="btnImp" type="button">⬆ Import JSON</button></label>
+        <input type="file" id="fileImp" accept=".json,application/json" style="display:none">
+        <button id="btnCsv2">⬇ Export CSV</button>
+      </div>
+      <div class="status" id="fisaStatus" role="status"></div>
+    </div>
+  </section>
+
+  <!-- ================= 6 · BREVIAR ================= -->
+  <section class="tab" id="t-brev">
+    <div class="card">
+      <h2>Breviar</h2>
+      <details open><summary>Ce este Home Assistant OS</summary>
+        <p>HAOS este un sistem de operare minimal, construit pentru Home Assistant. Conține <b>Supervisor</b> (gestionează actualizări, add-on-uri, backupuri) și <b>Home Assistant Core</b> (aplicația Python cu integrările, automatizările și dashboardurile). Este metoda de instalare recomandată pentru majoritatea utilizatorilor. Alternativa <b>Container</b> (Docker) nu are Supervisor și nici magazin de add-on-uri.</p>
+      </details>
+      <details><summary>Cerințe minime (orientativ)</summary>
+        <ul>
+          <li>2 nuclee, 4 GB RAM recomandat (2 GB minim), disc de 32 GB.</li>
+          <li>Pe Pi: card SD A2 sau, de preferat, SSD; alimentator oficial; cablu Ethernet la prima pornire.</li>
+          <li>Pe mașini virtuale: firmware <b>UEFI/EFI</b> obligatoriu. Imaginea HAOS nu pornește în modul BIOS.</li>
+        </ul>
+      </details>
+      <details><summary>Porturi și adrese folosite</summary>
+        <ul>
+          <li><b>8123</b> – interfața web și API Home Assistant (<code>http://homeassistant.local:8123</code> sau <code>http://IP:8123</code>).</li>
+          <li><b>8006</b> – interfața web Proxmox (<code>https://IP:8006</code>).</li>
+          <li><b>1883</b> – broker MQTT (dacă folosești Mosquitto).</li>
+          <li><b>22 / 22222</b> – SSH prin add-on-ul Terminal &amp; SSH / depanarea gazdei HAOS.</li>
+        </ul>
+      </details>
+      <details><summary>De ce IP fix (rezervare DHCP)</summary>
+        <p>După un restart al routerului, dispozitivele pot primi alte adrese, iar integrările care țin minte IP-ul (MQTT, invertoare, controlere) devin „unavailable”. Soluția recomandată: rezervare DHCP în router (MAC → IP), nu IP setat manual pe fiecare dispozitiv. Adresa o alegi din intervalul liber al routerului tău (în laborator, o primești de la cadrul didactic).</p>
+      </details>
+      <details><summary>Legătura cu instalația reală a laboratorului</summary>
+        <p>Laboratorul rulează Home Assistant atât pe Raspberry Pi 4, cât și ca mașină virtuală pe servere Proxmox. Tabloul T02 are un dashboard SCADA construit în HA. Instalarea din acest modul este primul pas pentru orice lucrare care folosește tablourile T0x.</p>
+      </details>
+      <details><summary>Bibliografie și surse</summary>
+        <ul>
+          <li>Home Assistant – Installation (Raspberry Pi, Windows/Linux): home-assistant.io/installation</li>
+          <li>Home Assistant Developer Docs – Operating System, Virtual Machine: developers.home-assistant.io</li>
+          <li>Proxmox VE Helper-Scripts (community-scripts), Home Assistant OS VM: community-scripts.org</li>
+          <li>Raspberry Pi Imager: raspberrypi.com/software</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  ConectLab EB104 · UPB · Facultatea de Inginerie Electrică · An universitar 2026–2027 · <span id="verFoot"></span><br>
+  Aplicația rulează local în browser; nu transmite date și nu trimite note.
+</footer>
+
+<script>
+  'use strict';
+
+  // ---------- constante ----------
+  const VERSION = '1.1';
+  const CODE = 'CONECTLAB-M01';
+
+  // ---------- bloc comun ----------
+  function $(id) { return document.getElementById(id); }
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  // valori generice afișate în pași (nu se calculează pentru fiecare student)
+  const V = { host: 'homeassistant', ip: 'IP-HA', vmid: 'ID-VM' };
+
+  function fmt(v, d) { return Number(v).toFixed(d).replace('.', ','); }
+
+  function esc(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function status(id, msg) {
+    $(id).textContent = msg;
+    if (msg) { setTimeout(function () { if ($(id).textContent === msg) { $(id).textContent = ''; } }, 4000); }
+  }
+
+  function download(name, content, type) {
+    const blob = new Blob([content], { type: type });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  function nowStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function toCSV(rows) {
+    const head = ['CODE', 'VERSION', 'data_ora'];
+    const lines = [];
+    lines.push(head.concat(rows.header).join(';'));
+    rows.data.forEach(function (r) {
+      lines.push([CODE, VERSION, nowStr()].concat(r).map(function (c) {
+        return '"' + String(c).replace(/"/g, '""') + '"';
+      }).join(';'));
+    });
+    return '﻿' + lines.join('\n');
+  }
+
+  const LS_KEY = CODE + '-' + VERSION;
+
+  function saveLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(collect())); }
+    catch (e) { status('fisaStatus', 'Salvarea locală nu merge în acest browser – folosește Export JSON.'); }
+  }
+
+  function restoreLocal() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { apply(JSON.parse(raw), true); }
+    } catch (e) { /* ignorăm: pornim curat */ }
+  }
+
+  // ---------- stare ----------
+  const state = {
+    route: 'rpi',
+    fault: null,
+    cases: [],
+    log: []
+  };
+
+  // ---------- trasee ----------
+  function routes(v) {
+    return {
+      rpi: {
+        name: 'Raspberry Pi',
+        steps: [
+          { t: 'Pregătește hardware-ul', d: 'Raspberry Pi 4 sau 5 (recomandat 4 GB RAM), card SD A2 de minimum 32 GB sau, mai bine, un SSD pe USB, alimentator oficial și cablu Ethernet. La prima pornire, Ethernetul este necesar.', c: [], con: ['[host] Hardware verificat: Pi 4, 4 GB, SSD USB 120 GB, Ethernet conectat'] },
+          { t: 'Scrie imaginea cu Raspberry Pi Imager', d: 'Device → modelul tău; OS → Other specific-purpose OS → Home automation → Home Assistant → Home Assistant OS (RPi 4/400 sau RPi 5); Storage → cardul/SSD-ul. Nu folosi personalizările (Wi-Fi, SSH) din Imager: HAOS nu le ia în seamă.', c: [], con: ['[imager] Se scrie haos_rpi4-64 pe /dev/sdb …', '[imager] Scriere 100% · Verificare 100% · Gata'] },
+          { t: 'Prima pornire', d: 'Introdu cardul/SSD-ul, conectează Ethernetul și apoi alimentarea. Prima pornire durează de obicei 5–20 de minute: sistemul descarcă ultima versiune Home Assistant.', c: [], con: ['[boot] U-Boot … Starting kernel', '[haos] Home Assistant OS – pregătire …', '[haos] Se descarcă Home Assistant Core (poate dura câteva minute)'] },
+          { t: 'Deschide interfața', d: 'De pe un calculator din aceeași rețea, deschide adresa de mai jos. Dacă numele .local nu merge (unele rețele Windows), folosește IP-ul din lista de clienți a routerului.', c: ['http://homeassistant.local:8123'], con: ['[haos] Home Assistant Core pornit', '[i] Interfață disponibilă: http://homeassistant.local:8123'] },
+          { t: 'Onboarding', d: 'Creezi contul de administrator (parolă puternică, notată în fișă doar la tine), alegi locația, fusul orar Europe/Bucharest și unitățile metrice. Sari peste dispozitivele descoperite automat: le adaugi conștient mai târziu.', c: [], con: ['[ha] Utilizator creat · Locație setată · Unități: metric'] },
+          { t: 'IP fix prin rezervare DHCP', d: 'În router: lista de clienți → dispozitivul homeassistant → rezervare la adresa de mai jos. Apoi, în HA: Setări → Sistem → Rețea, verifici că apare adresa. Opțional, redenumești gazda (Setări → Sistem → Rețea → Nume gazdă).', c: [], con: ['[router] Rezervare DHCP: MAC … → IP fix', '[ha] Setări → Sistem → Rețea: IP fix confirmat'] },
+          { t: 'Primul backup', d: 'Setări → Sistem → Backup → Creează backup (complet). Descarcă fișierul .tar pe calculator. Fără backup nu treci mai departe.', c: [], con: ['[ha] Backup complet creat și descărcat ✓'] }
+        ],
+        faults: {
+          psu: { b: 'Alimentator slab', sym: ['[w] Under-voltage detected!', '[e] Reporniri aleatorii în timpul descărcării'], dx: 'Simptom: Pi-ul repornește singur, prima pornire nu se termină. Cauză: alimentator sub specificație sau cablu subțire. Remediu: alimentatorul oficial al modelului de Pi.', at: 2, alt: { 0: ['[host] Hardware: Pi 4, 4 GB, SSD USB · alimentator de telefon, cablu subțire'] } },
+          sd: { b: 'Card SD lent/uzat', sym: ['[w] mmc0: timeout waiting for hardware interrupt', '[e] Baza de date se încarcă foarte greu'], dx: 'Simptom: interfața merge foarte încet, apar erori de citire. Cauză: card SD lent sau uzat de scrierile bazei de date. Remediu: card A2 de calitate sau, mai bine, SSD pe USB.', at: 2, alt: { 0: ['[host] Hardware: Pi 4, 4 GB, card SD vechi clasa 4 · Ethernet conectat'] } },
+          wifi: { b: 'Fără Ethernet la prima pornire', sym: ['[e] Nicio interfață de rețea activă', '[e] homeassistant.local nu răspunde'], dx: 'Simptom: adresa nu se deschide niciodată. Cauză: HAOS nu știe încă rețeaua Wi-Fi la prima pornire. Remediu: Ethernet la instalare; Wi-Fi se configurează după, din Setări → Sistem → Rețea.', at: 3, alt: { 0: ['[host] Hardware: Pi 4, 4 GB, SSD USB · fără cablu Ethernet (doar Wi-Fi)'] } }
+        }
+      },
+      vmw: {
+        name: 'VMware Workstation',
+        steps: [
+          { t: 'Descarcă imaginea .vmdk', d: 'De pe pagina oficială de instalare Home Assistant (Windows sau Linux) alegi imaginea VMware Workstation (.vmdk), fișierul haos_ova-XX.X.vmdk.zip. Dezarhivează-l: rămâne un singur fișier .vmdk.', c: [], con: ['[host] Descărcat haos_ova-XX.X.vmdk.zip → dezarhivat'] },
+          { t: 'Creează mașina virtuală', d: 'New Virtual Machine → Custom → „I will install the operating system later” → Linux → Other Linux 5.x kernel 64-bit. Nume: la alegere (ex. homeassistant). Resurse: 2 procesoare, 4096 MB RAM. Rețea: Bridged.', c: [], con: ['[vmware] VM „homeassistant” creată · 2 vCPU · 4 GB · Bridged'] },
+          { t: 'Atașează discul HAOS', d: 'Varianta 1: la „Select a Disk” alegi „Use an existing virtual disk” și indici .vmdk-ul. Varianta 2: lași VMware să creeze discul gol, apoi îl ștergi din folderul VM-ului și copiezi acolo .vmdk-ul HAOS cu exact același nume. Dacă VMware întreabă de conversia formatului discului, păstrează formatul existent.', c: [], con: ['[vmware] Disc atașat: homeassistant.vmdk (HAOS)'] },
+          { t: 'Activează EFI (pasul pe care îl ratează toți)', d: 'Workstation Pro: VM Settings → Options → Advanced → Firmware type: UEFI (fără Secure Boot). VMware Player nu are opțiunea în interfață: închizi VMware și adaugi linia de mai jos în fișierul .vmx al mașinii.', c: ['firmware = "efi"'], con: ['[vmware] Firmware: UEFI ✓'] },
+          { t: 'Pornește VM-ul', d: 'Power on. Consola VM afișează bannerul Home Assistant și adresa la care răspunde. Prima pornire descarcă Core și durează câteva minute.', c: [], con: ['[efi] Booting HAOS …', '[haos] Welcome to Home Assistant', '[i] homeassistant login: · http://192.168.1.x:8123'] },
+          { t: 'Onboarding și IP fix', d: 'Deschizi adresa în browser, creezi contul, apoi faci rezervarea DHCP în router pentru MAC-ul plăcii de rețea virtuale (îl vezi în VM Settings → Network Adapter → Advanced).', c: ['http://homeassistant.local:8123'], con: ['[ha] Onboarding complet · IP rezervat în router'] },
+          { t: 'Snapshot + backup', d: 'În VMware: VM → Snapshot → Take Snapshot („instalare curată”). În HA: Setări → Sistem → Backup → backup complet, descărcat. Snapshotul te întoarce înapoi în câteva secunde dacă un update strică ceva.', c: [], con: ['[vmware] Snapshot „instalare curata” ✓', '[ha] Backup complet ✓'] }
+        ],
+        faults: {
+          bios: { b: 'Firmware BIOS (fără EFI)', sym: ['[e] Operating System not found', '[e] Ecran negru, fără niciun mesaj'], dx: 'Simptom: ecran negru sau „Operating System not found”. Cauză: imaginea HAOS este construită pentru pornire EFI, iar VMware pornește implicit în BIOS. Remediu: Firmware type UEFI sau linia firmware = "efi" în .vmx.', at: 4, alt: { 3: ['[w] Pas sărit: firmware rămas BIOS (implicit)'] } },
+          nat: { b: 'Rețea NAT în loc de Bridged', sym: ['[w] IP primit: 192.168.x.x din rețeaua internă VMware', '[e] De pe telefon / ESP32: timeout la :8123'], dx: 'Simptom: HA se deschide doar de pe laptop, iar dispozitivele din rețea nu-l văd. Cauză: în NAT, VM-ul stă într-o rețea privată a VMware. Remediu: Network Adapter → Bridged, apoi repornești VM-ul.', at: 5, alt: { 1: ['[vmware] VM „homeassistant” creată · 2 vCPU · 4 GB · NAT'] } },
+          vtx: { b: 'Virtualizare dezactivată', sym: ['[e] This host does not support Intel VT-x / AMD-V', '[e] VM-ul nu pornește'], dx: 'Simptom: VMware refuză să pornească VM-ul. Cauză: VT-x/AMD-V dezactivat în BIOS-ul laptopului sau ocupat de alt hipervizor. Remediu: activezi virtualizarea în BIOS și verifici că nu o blochează alt hipervizor.', at: 4 }
+        }
+      },
+      pve: {
+        name: 'Proxmox VE',
+        steps: [
+          { t: 'Intră în Proxmox', d: 'Din browser deschizi interfața web a serverului, apoi selectezi nodul → Shell. Ai nevoie de drepturi root pe nod.', c: ['https://IP-SERVER:8006'], con: ['[pve] Autentificat ca root@pam · Nod → Shell'] },
+          { t: 'Rulează scriptul HAOS VM', d: 'Scriptul comunitar (community-scripts, fost tteck) descarcă imaginea oficială .qcow2 și creează VM-ul. Citește scriptul înainte să-l rulezi: execuți cod de pe internet ca root.', c: ['bash -c "$(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/haos-vm.sh)"'], con: ['[script] This will create a New Home Assistant OS VM. Proceed? → Yes'] },
+          { t: 'Configurează în asistent', d: 'Alegi „Advanced”: canal stable; VM ID și nume primite de la cadrul didactic pe serverul laboratorului (acasă: primul ID liber și un nume ales de tine); 2 nuclee, 4096 MB RAM, disc 32 GB, bridge vmbr0, stocarea serverului (ex. local-lvm). Pornire automată la final: da.', c: [], con: ['[script] VM ID 100 · homeassistant · 2 CPU · 4096 MB · 32G · vmbr0', '[script] Se descarcă haos_ova-XX.X.qcow2.xz …', '[script] Disc importat · UEFI (OVMF) · q35 ✓', '[script] VM 100 pornit'] },
+          { t: 'Găsește adresa', d: 'Selectezi VM-ul tău → Console: apare bannerul HA cu adresa. Sau Summary → IPs (după ce pornește agentul).', c: [], con: ['[haos] Welcome to Home Assistant', '[i] http://192.168.1.x:8123'] },
+          { t: 'Onboarding sau restaurare', d: 'Instalare nouă: creezi contul. Migrare de pe Pi/VMware: la ecranul de început alegi „Restaurează dintr-un backup” și încarci .tar-ul descărcat. După restaurare oprești instanța veche: două instanțe cu aceeași configurație se încurcă (MQTT, dispozitive).', c: ['http://homeassistant.local:8123'], con: ['[ha] Backup încărcat · restaurare în curs …', '[ha] Restaurare completă ✓ · instanța veche oprită'] },
+          { t: 'IP fix și backup Proxmox', d: 'Rezervare DHCP în router pentru MAC-ul VM-ului (Hardware → Network Device). În Proxmox: Datacenter → Backup → Add (job săptămânal pentru VM-ul tău). Înainte de orice update mare: Snapshot.', c: [], con: ['[pve] Job backup săptămânal VM 100 ✓', '[pve] Snapshot „inainte-de-update” ✓'] },
+          { t: 'Alternativă manuală (fără script)', d: 'Pentru cine vrea să înțeleagă ce face scriptul. În primele trei comenzi pui versiunea curentă HAOS (pagina de release de pe GitHub), ID-ul și numele VM-ului; local-lvm se înlocuiește cu stocarea serverului. Rulezi comenzile pe rând, în Shell-ul nodului.', c: ['VER=XX.X', 'VMID=100', 'NUME=homeassistant', 'wget https://github.com/home-assistant/operating-system/releases/download/${VER}/haos_ova-${VER}.qcow2.xz', 'xz -d haos_ova-${VER}.qcow2.xz', 'qm create ${VMID} --name ${NUME} --memory 4096 --cores 2 --net0 virtio,bridge=vmbr0 --bios ovmf --machine q35 --efidisk0 local-lvm:0,efitype=4m,pre-enrolled-keys=0 --scsihw virtio-scsi-pci --ostype l26', 'qm importdisk ${VMID} haos_ova-${VER}.qcow2 local-lvm', 'qm set ${VMID} --scsi0 local-lvm:vm-${VMID}-disk-1 --boot order=scsi0', 'qm resize ${VMID} scsi0 32G', 'qm start ${VMID}'], con: ['[pve] qm create/importdisk/set/start ✓ (varianta manuală)'] }
+        ],
+        faults: {
+          lxc: { b: 'HA pus în container LXC', sym: ['[w] Container creat în loc de VM', '[e] Lipsesc Supervisor și add-on-urile'], dx: 'Simptom: merge Core, dar nu ai magazin de add-on-uri și nici backup Supervisor. Cauză: HAOS este un sistem de operare complet și trebuie să ruleze ca VM, nu ca LXC. Remediu: scriptul haos-vm (VM), nu un container.', at: 2, alt: { 1: ['[w] S-a rulat un script de container (LXC) Home Assistant, nu haos-vm'] } },
+          param: { b: 'Eroare 400 la crearea VM', sym: ['[e] Creating Home Assistant OS VM shell', '[e] 400 Parameter verification failed.'], dx: 'Simptom: scriptul se oprește la crearea VM-ului. Cauze tipice: VM ID deja folosit, stocare greșită sau nume de bridge inexistent. Remediu: verifici ID-urile libere și numele stocării/bridge-ului, apoi rulezi din nou în modul Advanced.', at: 2 },
+          dual: { b: 'Instanța veche rămâne pornită', sym: ['[w] Două instanțe cu aceeași configurație', '[e] MQTT: client ID duplicat · deconectări repetate'], dx: 'Simptom: entități care sar între „available” și „unavailable”, conexiuni MQTT care se rup. Cauză: Pi-ul vechi și VM-ul nou rulează aceeași configurație restaurată. Remediu: oprești instanța veche imediat după restaurare.', at: 4 }
+        }
+      }
+    };
+  }
+
+  // ---------- randare pași ----------
+  function cmdBlock(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'cmd';
+    const pre = document.createElement('pre');
+    pre.textContent = text;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = 'Copiază';
+    b.addEventListener('click', function () {
+      const done = function () { b.textContent = 'Copiat ✓'; setTimeout(function () { b.textContent = 'Copiază'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { b.textContent = 'Selectează manual'; });
+      } else {
+        const r = document.createRange(); r.selectNodeContents(pre);
+        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        b.textContent = 'Ctrl+C';
+      }
+    });
+    wrap.appendChild(pre);
+    wrap.appendChild(b);
+    return wrap;
+  }
+
+  function renderSteps() {
+    const R = routes(V)[state.route];
+    const list = $('stepList');
+    list.innerHTML = '';
+    R.steps.forEach(function (s, i) {
+      const li = document.createElement('li');
+      li.id = 'st' + i;
+      const h = document.createElement('h4'); h.textContent = s.t;
+      const p = document.createElement('p'); p.textContent = s.d;
+      li.appendChild(h); li.appendChild(p);
+      s.c.forEach(function (c) { li.appendChild(cmdBlock(c)); });
+      list.appendChild(li);
+    });
+    const fb = $('faults');
+    fb.innerHTML = '';
+    Object.keys(R.faults).forEach(function (k) {
+      const b = document.createElement('button');
+      b.className = 'fault';
+      b.type = 'button';
+      b.textContent = (state.fault === k ? '● ' : '○ ') + R.faults[k].b;
+      b.addEventListener('click', function () {
+        state.fault = (state.fault === k) ? null : k;
+        resetSim();
+        renderSteps();
+        $('faultInfo').innerHTML = state.fault ? '<div class="danger">Defect activ: <b>' + esc(R.faults[k].b) + '</b>. Pornește simularea.</div>' : '';
+      });
+      fb.appendChild(b);
+    });
+  }
+
+  // ---------- simulare ----------
+  const sim = { playing: false, step: 0, line: 0, acc: 0, last: 0, failed: false, finished: false };
+
+  function conLine(txt) {
+    const div = document.createElement('div');
+    if (txt.indexOf('[e]') === 0) { div.className = 'e'; }
+    else if (txt.indexOf('[w]') === 0) { div.className = 'w'; }
+    else if (txt.indexOf('[i]') === 0) { div.className = 'i'; }
+    div.textContent = txt;
+    $('console').appendChild(div);
+    $('console').scrollTop = $('console').scrollHeight;
+    state.log.push([state.route, sim.step + 1, txt]);
+  }
+
+  function resetSim() {
+    sim.playing = false; sim.step = 0; sim.line = 0; sim.acc = 0; sim.failed = false; sim.finished = false;
+    $('console').innerHTML = '';
+    $('prog').style.width = '0';
+    state.log = [];
+    document.querySelectorAll('#stepList li').forEach(function (li) { li.className = ''; });
+  }
+
+  function tick(ts) {
+    if (!sim.playing) { return; }
+    if (!sim.last) { sim.last = ts; }
+    const dt = (ts - sim.last) * Number($('speed').value);
+    sim.last = ts;
+    sim.acc += dt;
+    if (sim.acc >= 900) {
+      sim.acc = 0;
+      advance();
+    }
+    if (sim.playing) { requestAnimationFrame(tick); }
+  }
+
+  function advance() {
+    const R = routes(V)[state.route];
+    const s = R.steps[sim.step];
+    const items = document.querySelectorAll('#stepList li');
+    items.forEach(function (li, i) {
+      if (i < sim.step) { li.className = 'done'; }
+      else if (i === sim.step) { li.className = 'now'; }
+    });
+    const f = state.fault ? R.faults[state.fault] : null;
+    if (f && sim.step === f.at && !sim.failed) {
+      if (sim.line < f.sym.length) {
+        conLine(f.sym[sim.line]); sim.line++; return;
+      }
+      sim.failed = true; sim.playing = false;
+      items[sim.step].className = 'err';
+      $('faultInfo').innerHTML = '<div class="danger"><b>Diagnostic:</b> ' + esc(f.dx) + '</div>';
+      status('bancStatus', 'Instalarea s-a oprit la pasul ' + (sim.step + 1) + '. Notează cazul în fișă.');
+      return;
+    }
+    const lines = (f && f.alt && f.alt[sim.step]) ? f.alt[sim.step] : s.con;
+    if (sim.line < lines.length) {
+      conLine(lines[sim.line]); sim.line++;
+    } else {
+      sim.step++; sim.line = 0;
+      $('prog').style.width = (100 * sim.step / R.steps.length) + '%';
+      if (sim.step >= R.steps.length) {
+        items.forEach(function (li) { li.className = 'done'; });
+        conLine('[i] ✓ Instalare ' + R.name + ' completă.');
+        sim.playing = false; sim.finished = true;
+        status('bancStatus', 'Traseu complet. Încearcă și un defect.');
+      }
+    }
+  }
+
+  function play() {
+    if (sim.failed || sim.finished) { resetSim(); }
+    if (sim.playing) { return; }
+    sim.playing = true; sim.last = 0;
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- diagrama arhitecturii ----------
+  function drawArch() {
+    const cols = [
+      { x: 20, c: '#c51a4a', base: 'Raspberry Pi 4/5', hv: 'fără hipervizor' },
+      { x: 230, c: '#7f56d9', base: 'Laptop (Windows/Linux)', hv: 'VMware Workstation' },
+      { x: 440, c: '#e57000', base: 'Server (ex. OptiPlex)', hv: 'Proxmox VE (KVM)' }
+    ];
+    let s = '';
+    cols.forEach(function (k) {
+      const sel = (state.route === ['rpi', 'vmw', 'pve'][cols.indexOf(k)]);
+      const op = sel ? 1 : 0.45;
+      s += '<g opacity="' + op + '">';
+      s += '<rect x="' + k.x + '" y="20" width="190" height="56" rx="8" fill="#0b7fb0" stroke="#18bcf2"/>';
+      s += '<text x="' + (k.x + 95) + '" y="44" fill="#fff" text-anchor="middle" font-size="14" font-weight="700">Home Assistant Core</text>';
+      s += '<text x="' + (k.x + 95) + '" y="64" fill="#d9f3ff" text-anchor="middle" font-size="12">integrări · automatizări · UI</text>';
+      s += '<rect x="' + k.x + '" y="84" width="190" height="44" rx="8" fill="#183050" stroke="#18bcf2"/>';
+      s += '<text x="' + (k.x + 95) + '" y="111" fill="#e7f0fa" text-anchor="middle" font-size="13">Supervisor + add-on-uri</text>';
+      s += '<rect x="' + k.x + '" y="136" width="190" height="44" rx="8" fill="#183050" stroke="#9fb3c8"/>';
+      s += '<text x="' + (k.x + 95) + '" y="163" fill="#e7f0fa" text-anchor="middle" font-size="13">Home Assistant OS</text>';
+      s += '<rect x="' + k.x + '" y="188" width="190" height="44" rx="8" fill="#0f2034" stroke="' + k.c + '" stroke-dasharray="' + (cols.indexOf(k) === 0 ? '4 3' : '0') + '"/>';
+      s += '<text x="' + (k.x + 95) + '" y="215" fill="#e7f0fa" text-anchor="middle" font-size="13">' + k.hv + '</text>';
+      s += '<rect x="' + k.x + '" y="240" width="190" height="70" rx="8" fill="' + k.c + '"/>';
+      s += '<text x="' + (k.x + 95) + '" y="280" fill="#fff" text-anchor="middle" font-size="14" font-weight="700">' + k.base + '</text>';
+      s += '</g>';
+    });
+    $('arcCols').innerHTML = s;
+  }
+
+  // animatia pachetului pe sageata spre browser
+  let pktT = 0;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function animPkt() {
+    const path = $('flowA');
+    const L = path.getTotalLength();
+    pktT = (pktT + 0.008) % 1;
+    const p = path.getPointAtLength(pktT * L);
+    $('pkt').setAttribute('cx', p.x);
+    $('pkt').setAttribute('cy', p.y);
+    if (!reduce) { requestAnimationFrame(animPkt); }
+  }
+
+  // ---------- quiz ----------
+  const QUIZ = [
+    { q: 'VM-ul HAOS din VMware arată „Operating System not found”. Cauza cea mai probabilă?', o: ['RAM prea puțin', 'Firmware BIOS în loc de EFI', 'Lipsește cardul SD', 'Port 8123 blocat'], a: 1 },
+    { q: 'Pe ce port răspunde implicit interfața web Home Assistant?', o: ['80', '8006', '8123', '1883'], a: 2 },
+    { q: 'De ce se pune HAOS în Proxmox ca VM, nu ca container LXC?', o: ['LXC e mai lent', 'HAOS e un sistem de operare complet, cu Supervisor și add-on-uri', 'Proxmox nu are LXC', 'Așa cere routerul'], a: 1 },
+    { q: 'Ce imagine HAOS folosești în VMware Workstation?', o: ['.qcow2', '.vdi', '.vmdk', '.img pentru RPi'], a: 2 },
+    { q: 'ESP32 din rețea nu vede HA instalat în VMware, deși laptopul îl deschide. Ce verifici?', o: ['Adaptorul de rețea: Bridged, nu NAT', 'Versiunea Python', 'Fusul orar', 'Tema dashboardului'], a: 0 },
+    { q: 'Care e metoda recomandată pentru IP fix?', o: ['Schimbi IP-ul la fiecare restart', 'Rezervare DHCP în router (MAC → IP)', 'Folosești doar homeassistant.local', 'Dezactivezi DHCP în rețea'], a: 1 },
+    { q: 'Muți HA de pe Pi pe Proxmox. Ce faci imediat după restaurarea backupului pe VM?', o: ['Ștergi backupul', 'Oprești instanța veche de pe Pi', 'Reinstalezi Pi-ul', 'Nimic'], a: 1 },
+    { q: 'Ce avantaj are Proxmox față de Raspberry Pi pentru o licență de un an?', o: ['Nu are nevoie de rețea', 'Snapshot înainte de update și backup programat al întregului VM', 'Nu are nevoie de backup HA', 'Consum mai mic'], a: 1 }
+  ];
+
+  function renderQuiz() {
+    const box = $('quiz');
+    box.innerHTML = '';
+    QUIZ.forEach(function (it, i) {
+      const d = document.createElement('div');
+      d.className = 'q';
+      const h = document.createElement('b'); h.textContent = (i + 1) + '. ' + it.q;
+      d.appendChild(h);
+      it.o.forEach(function (o, j) {
+        const l = document.createElement('label');
+        const r = document.createElement('input');
+        r.type = 'radio'; r.name = 'q' + i; r.value = j;
+        r.addEventListener('change', saveLocal);
+        l.appendChild(r);
+        l.appendChild(document.createTextNode(' ' + o));
+        d.appendChild(l);
+      });
+      const fb = document.createElement('div'); fb.className = 'fb'; fb.id = 'fb' + i;
+      d.appendChild(fb);
+      box.appendChild(d);
+    });
+  }
+
+  function quizAnswers() {
+    return QUIZ.map(function (it, i) {
+      const r = document.querySelector('input[name="q' + i + '"]:checked');
+      return r ? Number(r.value) : null;
+    });
+  }
+
+  function checkQuiz() {
+    const ans = quizAnswers();
+    let ok = 0;
+    ans.forEach(function (a, i) {
+      const fb = $('fb' + i);
+      if (a === null) { fb.textContent = 'Fără răspuns.'; fb.style.color = 'var(--warn)'; }
+      else if (a === QUIZ[i].a) { ok++; fb.textContent = '✓ Corect.'; fb.style.color = 'var(--ok)'; }
+      else { fb.textContent = '✗ Răspuns corect: ' + QUIZ[i].o[QUIZ[i].a]; fb.style.color = 'var(--bad)'; }
+    });
+    $('quizScore').textContent = 'Scor: ' + ok + ' / ' + QUIZ.length;
+    state.quizScore = ok;
+    saveLocal();
+  }
+
+  // ---------- fisa ----------
+  const CHECKS = [
+    'Imaginea potrivită gazdei a fost scrisă / atașată',
+    'Prima pornire s-a terminat, interfața se deschide pe :8123',
+    'Contul de administrator a fost creat',
+    'IP-ul este rezervat în router și apare în Setări → Sistem → Rețea',
+    'VM ID și numele gazdei sunt cele stabilite (laborator) sau notate în fișă (acasă)',
+    'Primul backup complet a fost descărcat'
+  ];
+
+  function renderFisa() {
+    const c = $('fCheck');
+    if (!c.children.length) {
+      CHECKS.forEach(function (t, i) {
+        const l = document.createElement('label'); l.className = 'check';
+        const x = document.createElement('input'); x.type = 'checkbox'; x.id = 'ck' + i;
+        x.addEventListener('change', saveLocal);
+        l.appendChild(x); l.appendChild(document.createTextNode(t));
+        c.appendChild(l);
+      });
+    }
+    $('fCazuri').innerHTML = state.cases.length
+      ? '<ul>' + state.cases.map(function (k) { return '<li>' + esc(k) + '</li>'; }).join('') + '</ul>'
+      : '—';
+  }
+
+  const FIELDS = ['fNume', 'fGrupa', 'fGazda', 'fPred', 'fC1', 'fC2', 'fC3', 'fConc'];
+
+  function collect() {
+    const o = { CODE: CODE, VERSION: VERSION, route: state.route, cases: state.cases, quiz: quizAnswers(), checks: [], fields: {}, date: nowStr() };
+    FIELDS.forEach(function (f) { o.fields[f] = $(f).value; });
+    CHECKS.forEach(function (_, i) { o.checks.push(!!($('ck' + i) && $('ck' + i).checked)); });
+    return o;
+  }
+
+  function apply(o, silent) {
+    if (!o || o.CODE !== CODE || typeof o.fields !== 'object') {
+      if (!silent) { status('fisaStatus', 'Fișierul nu este o fișă ' + CODE + '. Import respins.'); }
+      return false;
+    }
+    if (o.VERSION !== VERSION && !silent) { status('fisaStatus', 'Atenție: fișa e din versiunea ' + o.VERSION + ', aplicația e ' + VERSION + '.'); }
+    if (['rpi', 'vmw', 'pve'].indexOf(o.route) >= 0) { setRoute(o.route); }
+    state.cases = Array.isArray(o.cases) ? o.cases.map(String).slice(0, 30) : [];
+    FIELDS.forEach(function (f) { if (typeof o.fields[f] === 'string') { $(f).value = o.fields[f]; } });
+    renderFisa();
+    if (Array.isArray(o.checks)) { o.checks.forEach(function (c, i) { if ($('ck' + i)) { $('ck' + i).checked = !!c; } }); }
+    if (Array.isArray(o.quiz)) {
+      o.quiz.forEach(function (a, i) {
+        const r = document.querySelector('input[name="q' + i + '"][value="' + a + '"]');
+        if (r) { r.checked = true; }
+      });
+    }
+    return true;
+  }
+
+  // ---------- traseu ----------
+  function setRoute(r) {
+    state.route = r;
+    state.fault = null;
+    $('routeSel').value = r;
+    $('fRoute').value = r;
+    $('faultInfo').innerHTML = '';
+    document.querySelectorAll('.route').forEach(function (el) { el.classList.toggle('sel', el.dataset.r === r); });
+    drawArch();
+    resetSim();
+    renderSteps();
+  }
+
+  // ---------- evenimente ----------
+  document.querySelectorAll('#tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.remove('active'); });
+      document.querySelectorAll('section.tab').forEach(function (s) { s.classList.remove('active'); });
+      b.classList.add('active');
+      $(b.dataset.t).classList.add('active');
+      if (b.dataset.t === 't-fisa') { renderFisa(); }
+    });
+  });
+  document.querySelectorAll('.route').forEach(function (el) {
+    el.addEventListener('click', function () { setRoute(el.dataset.r); saveLocal(); });
+  });
+  $('routeSel').addEventListener('change', function () { setRoute(this.value); saveLocal(); });
+  $('fRoute').addEventListener('change', function () { setRoute(this.value); saveLocal(); });
+  $('btnPlay').addEventListener('click', play);
+  $('btnPause').addEventListener('click', function () { sim.playing = false; });
+  $('btnReset').addEventListener('click', resetSim);
+  $('btnQuiz').addEventListener('click', checkQuiz);
+  $('btnNote').addEventListener('click', function () {
+    const R = routes(V)[state.route];
+    let t = R.name + ': ';
+    if (sim.failed && state.fault) { t += 'defect „' + R.faults[state.fault].b + '” la pasul ' + (sim.step + 1) + ' – ' + R.faults[state.fault].dx; }
+    else if (sim.finished) { t += 'traseu complet, fără defect'; }
+    else { status('bancStatus', 'Rulează simularea până la capăt sau până la defect, apoi notează.'); return; }
+    state.cases.push(t);
+    renderFisa();
+    saveLocal();
+    status('bancStatus', 'Caz notat în fișă (' + state.cases.length + ').');
+  });
+  $('btnCsv').addEventListener('click', function () {
+    if (!state.log.length) { status('bancStatus', 'Jurnalul e gol: pornește simularea întâi.'); return; }
+    download(CODE + '_jurnal.csv', toCSV({ header: ['traseu', 'pas', 'mesaj'], data: state.log }), 'text/csv;charset=utf-8');
+  });
+  $('btnCsv2').addEventListener('click', function () {
+    const o = collect();
+    const rows = [['traseu', o.route]];
+    FIELDS.forEach(function (f) { rows.push([f, o.fields[f]]); });
+    CHECKS.forEach(function (t, i) { rows.push([t, o.checks[i] ? 'da' : 'nu']); });
+    o.cases.forEach(function (c, i) { rows.push(['caz ' + (i + 1), c]); });
+    rows.push(['scor test', state.quizScore === undefined ? 'neverificat' : state.quizScore + '/' + QUIZ.length]);
+    download(CODE + '_fisa.csv', toCSV({ header: ['camp', 'valoare'], data: rows }), 'text/csv;charset=utf-8');
+  });
+  $('btnJson').addEventListener('click', function () {
+    download(CODE + '_fisa.json', JSON.stringify(collect(), null, 2), 'application/json');
+  });
+  $('btnImp').addEventListener('click', function () { $('fileImp').click(); });
+  $('fileImp').addEventListener('change', function () {
+    const f = this.files[0];
+    if (!f) { return; }
+    const rd = new FileReader();
+    rd.onload = function () {
+      try {
+        if (apply(JSON.parse(rd.result), false)) { renderFisa(); saveLocal(); status('fisaStatus', 'Fișă importată.'); }
+      } catch (e) { status('fisaStatus', 'Fișier JSON invalid. Import respins.'); }
+    };
+    rd.readAsText(f);
+    this.value = '';
+  });
+  FIELDS.forEach(function (f) { $(f).addEventListener('input', saveLocal); });
+
+  // ---------- pornire ----------
+  $('verFoot').textContent = CODE + ' · v' + VERSION;
+  renderQuiz();
+  setRoute('rpi');
+  restoreLocal();
+  renderFisa();
+  drawArch();
+  animPkt();
+</script>
+</body>
+</html>
