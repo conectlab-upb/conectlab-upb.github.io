@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="150 310 400 260">
+  <!-- ConectLab – simbol B „Două verigi” (variantă pentru fundal închis) -->
+  <circle cx="402" cy="440" r="105" fill="none" stroke="#14b8a6" stroke-width="30"/>
+  <circle cx="292" cy="440" r="105" fill="none" stroke="#e8eef8" stroke-width="30"/>
+  <!-- împletire: segmentul teal trece peste inelul deschis -->
+  <path d="M 306.8 484.4 A 105 105 0 0 0 383.8 543.4" fill="none" stroke="#14b8a6" stroke-width="30"/>
+  <circle cx="187" cy="440" r="26" fill="#14b8a6"/>
+  <circle cx="292" cy="440" r="15" fill="#e8eef8"/>
+  <circle cx="402" cy="440" r="15" fill="#14b8a6"/>
+  <circle cx="508" cy="440" r="26" fill="#e8eef8"/>
+</svg>
