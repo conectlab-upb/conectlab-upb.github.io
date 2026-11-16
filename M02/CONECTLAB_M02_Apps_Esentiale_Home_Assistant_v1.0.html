@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConectLab · M02 · Apps esențiale Home Assistant</title>
+<style>
+  :root {
+    --bg: #0b1724;
+    --panel: #12243a;
+    --panel2: #183050;
+    --ink: #e7f0fa;
+    --muted: #9fb3c8;
+    --ha: #18bcf2;
+    --ha-dark: #0b7fb0;
+    --acc: #ff9f43;
+    --ok: #2ecc71;
+    --bad: #ff5c5c;
+    --warn: #ffd166;
+    --line: #2a4566;
+    --code: #07111b;
+    --rpi: #2ecc71;
+    --vmw: #ff9f43;
+    --pve: #b388ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(120deg, #0b1724 0%, #10345a 60%, #0b7fb0 100%);
+    padding: 18px 20px 14px;
+    border-bottom: 3px solid var(--ha);
+  }
+  header .tag { color: var(--ha); font-weight: 700; letter-spacing: .08em; font-size: .8rem; }
+  header h1 { margin: 4px 0 2px; font-size: 1.6rem; }
+  header p { margin: 0; color: var(--muted); font-size: .92rem; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  input, select, textarea {
+    background: var(--code); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 8px; font: inherit;
+  }
+  textarea { width: 100%; min-height: 70px; }
+  button {
+    background: var(--panel2); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 7px; padding: 7px 12px; font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: var(--ha); }
+  button.primary { background: var(--ha-dark); border-color: var(--ha); }
+  button.fault { border-color: var(--bad); color: #ffd0d0; }
+  nav.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 14px; }
+  nav.tabs button { border-radius: 20px; }
+  nav.tabs button.active { background: var(--ha); color: #04121e; font-weight: 700; }
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+  .card h2 { margin-top: 0; font-size: 1.2rem; color: var(--ha); }
+  .card h3 { margin: 14px 0 6px; font-size: 1.02rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .route {
+    border-radius: 12px; padding: 14px; border: 2px solid var(--line);
+    background: var(--panel2); cursor: pointer; transition: transform .15s;
+  }
+  .route:hover { transform: translateY(-2px); }
+  .route.sel { border-color: var(--ha); box-shadow: 0 0 0 3px rgba(24,188,242,.25); }
+  .route .ico { font-size: 1.7rem; }
+  .route b { display: block; font-size: 1.05rem; }
+  .route small { color: var(--muted); }
+  .r-rpi { border-left: 6px solid var(--rpi); }
+  .r-vmw { border-left: 6px solid var(--vmw); }
+  .r-pve { border-left: 6px solid var(--pve); }
+  .steps { list-style: none; padding: 0; margin: 0; counter-reset: st; }
+  .steps li {
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 10px 48px;
+    margin-bottom: 8px; position: relative; background: #0f2034;
+  }
+  .steps li::before {
+    counter-increment: st; content: counter(st);
+    position: absolute; left: 12px; top: 10px; width: 26px; height: 26px;
+    border-radius: 50%; background: var(--line); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  .steps li.done::before { background: var(--ok); color: #04121e; content: "✓"; }
+  .steps li.now { border-color: var(--ha); }
+  .steps li.now::before { background: var(--ha); color: #04121e; }
+  .steps li.err { border-color: var(--bad); }
+  .steps li.err::before { background: var(--bad); content: "!"; }
+  .steps li h4 { margin: 0 0 4px; font-size: 1rem; }
+  .steps li p { margin: 4px 0; color: #cfdceb; font-size: .93rem; }
+  .cmd { position: relative; margin: 6px 0; }
+  .cmd pre {
+    background: var(--code); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 70px 10px 12px; margin: 0; overflow-x: auto;
+    font-family: Consolas, "Courier New", monospace; font-size: .86rem; color: #bdf3c4;
+    white-space: pre;
+  }
+  .cmd button { position: absolute; top: 6px; right: 6px; padding: 3px 8px; font-size: .78rem; }
+  .tip { border-left: 4px solid var(--warn); background: rgba(255,209,102,.08); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: .9rem; }
+  .danger { border-left: 4px solid var(--bad); background: rgba(255,92,92,.08); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: .9rem; }
+  .console {
+    background: #000; color: #9cf59c; font-family: Consolas, monospace; font-size: .82rem;
+    border-radius: 8px; padding: 10px; height: 230px; overflow-y: auto; border: 1px solid var(--line);
+  }
+  .console .e { color: #ff7b7b; }
+  .console .w { color: var(--warn); }
+  .console .i { color: #8fd8ff; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+  .bar { height: 10px; background: var(--code); border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--ha-dark), var(--ha)); transition: width .3s; }
+  svg text { font-family: "Segoe UI", Arial, sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th, td { border: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--panel2); }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; }
+  .p-ok { background: rgba(46,204,113,.2); color: var(--ok); }
+  .p-mid { background: rgba(255,209,102,.18); color: var(--warn); }
+  .p-bad { background: rgba(255,92,92,.18); color: var(--bad); }
+  .q { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .q label { display: block; padding: 3px 0; cursor: pointer; }
+  .q .fb { font-size: .9rem; margin-top: 4px; }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; background: #0f2034; }
+  summary { cursor: pointer; font-weight: 700; color: var(--ha); }
+  .status { min-height: 1.4em; color: var(--warn); font-size: .9rem; }
+  .check { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; }
+  footer { color: var(--muted); font-size: .82rem; text-align: center; padding: 18px 10px 30px; }
+  @media (max-width: 760px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.3rem; }
+  }
+  @media print {
+    body { background: #fff; color: #000; }
+    .noprint, nav.tabs, header { display: none !important; }
+    section.tab { display: none !important; }
+    section#t-fisa { display: block !important; }
+    .card { border: 1px solid #999; background: #fff; color: #000; }
+    .card h2 { color: #000; }
+    input, textarea { background: #fff; color: #000; border: 1px solid #999; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .route { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="tag">CONECTLAB EB104 · MODUL COMUN M02</div>
+    <h1>Apps esențiale Home Assistant: stația minimă de laborator</h1>
+    <p>Continuarea modulului M01: acces, MQTT, ESP32, istoric și grafice, automatizări, acces sigur de la distanță · UPB, Facultatea de Inginerie Electrică</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="tabs noprint" id="tabs">
+    <button data-t="t-start" class="active">1 · Începe aici</button>
+    <button data-t="t-banc">2 · Banc virtual de instalare</button>
+    <button data-t="t-comp">3 · Harta apps</button>
+    <button data-t="t-test">4 · Mini-test</button>
+    <button data-t="t-fisa">5 · Fișa studentului</button>
+    <button data-t="t-brev">6 · Breviar</button>
+  </nav>
+
+  <!-- ================= 1 · ÎNCEPE AICI ================= -->
+  <section class="tab active" id="t-start">
+    <div class="card">
+      <h2>Ce faci în acest modul</h2>
+      <p>Pornești de la Home Assistant instalat în modulul M01 și adaugi <b>apps</b>, programele care rulează lângă Home Assistant (până la versiunea 2026.2 se numeau <i>add-ons</i>). Le găsești în <b>Setări → Apps → Instalează app</b>. Le instalezi în trei etape, în ordinea în care depind unele de altele.</p>
+      <div class="grid3" id="routePick">
+        <div class="route r-rpi" data-r="baza"><div class="ico">🧰</div><b>Etapa 1 · Baza</b><small>File editor, Terminal &amp; SSH, Mosquitto (MQTT), ESPHome</small></div>
+        <div class="route r-vmw" data-r="date"><div class="ico">📈</div><b>Etapa 2 · Date și automatizări</b><small>InfluxDB, Grafana, Node-RED</small></div>
+        <div class="route r-pve" data-r="retea"><div class="ico">🔐</div><b>Etapa 3 · Acces sigur</b><small>DuckDNS + Let's Encrypt, Tailscale, WireGuard</small></div>
+      </div>
+      <p style="margin-top:10px" class="tip">Lucrezi pe instanța ta (VMware, Pi) sau pe Home Assistant-ul de test al laboratorului. Etapa 3 se face doar pe instanța ta sau demonstrativ: în laborator nu se deschid porturi spre internet.</p>
+    </div>
+
+    <div class="card">
+      <h2>Arhitectura: cine cu cine vorbește</h2>
+      <svg viewBox="0 0 900 400" width="100%" role="img" aria-label="Fluxul de date între dispozitive, apps și Home Assistant">
+        <defs>
+          <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#18bcf2"/></marker>
+          <marker id="ar2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff9f43"/></marker>
+          <marker id="ar3" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b388ff"/></marker>
+        </defs>
+        <g id="arcCols">
+          <!-- etapa 1 -->
+          <g data-g="baza">
+            <rect x="20" y="30" width="170" height="60" rx="10" fill="#0f2034" stroke="#2ecc71"/>
+            <text x="105" y="56" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">ESP32 (ESPHome)</text>
+            <text x="105" y="76" fill="#9fb3c8" text-anchor="middle" font-size="12">senzori · relee</text>
+            <rect x="20" y="120" width="170" height="60" rx="10" fill="#0f2034" stroke="#2ecc71"/>
+            <text x="105" y="146" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Dispozitive MQTT</text>
+            <text x="105" y="166" fill="#9fb3c8" text-anchor="middle" font-size="12">Tasmota · noduri proprii</text>
+            <rect x="240" y="120" width="170" height="60" rx="10" fill="#183050" stroke="#2ecc71"/>
+            <text x="325" y="146" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Mosquitto</text>
+            <text x="325" y="166" fill="#9fb3c8" text-anchor="middle" font-size="12">broker MQTT · 1883</text>
+            <rect x="240" y="30" width="170" height="60" rx="10" fill="#183050" stroke="#2ecc71"/>
+            <text x="325" y="56" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">File editor · Terminal</text>
+            <text x="325" y="76" fill="#9fb3c8" text-anchor="middle" font-size="12">configuration.yaml</text>
+            <path d="M190,60 C222,60 222,105 252,105 L422,105 C446,105 456,128 470,150" stroke="#2ecc71" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+            <path d="M190,150 L240,150" stroke="#2ecc71" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+            <path d="M410,150 L460,180" stroke="#2ecc71" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+          </g>
+          <!-- nucleu -->
+          <rect x="460" y="150" width="190" height="80" rx="12" fill="#0b7fb0" stroke="#18bcf2"/>
+          <text x="555" y="184" fill="#fff" text-anchor="middle" font-size="16" font-weight="700">Home Assistant</text>
+          <text x="555" y="206" fill="#d9f3ff" text-anchor="middle" font-size="12">integrări · entități · :8123</text>
+          <!-- etapa 2 -->
+          <g data-g="date">
+            <rect x="460" y="290" width="190" height="56" rx="10" fill="#183050" stroke="#ff9f43"/>
+            <text x="555" y="314" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">InfluxDB v1</text>
+            <text x="555" y="333" fill="#9fb3c8" text-anchor="middle" font-size="12">istoric pe termen lung · 8086</text>
+            <rect x="700" y="290" width="180" height="56" rx="10" fill="#183050" stroke="#ff9f43"/>
+            <text x="790" y="314" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Grafana</text>
+            <text x="790" y="333" fill="#9fb3c8" text-anchor="middle" font-size="12">grafice și tablouri</text>
+            <rect x="240" y="290" width="170" height="56" rx="10" fill="#183050" stroke="#ff9f43"/>
+            <text x="325" y="314" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Node-RED</text>
+            <text x="325" y="333" fill="#9fb3c8" text-anchor="middle" font-size="12">fluxuri vizuale</text>
+            <path d="M555,230 L555,290" stroke="#ff9f43" stroke-width="2.5" fill="none" marker-end="url(#ar2)"/>
+            <path d="M650,318 L700,318" stroke="#ff9f43" stroke-width="2.5" fill="none" marker-end="url(#ar2)"/>
+            <path d="M480,230 C430,250 380,260 340,290" stroke="#ff9f43" stroke-width="2.5" fill="none" marker-end="url(#ar2)"/>
+          </g>
+          <!-- etapa 3 -->
+          <g data-g="retea">
+            <rect x="700" y="30" width="180" height="60" rx="10" fill="#183050" stroke="#b388ff"/>
+            <text x="790" y="56" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Telefon / laptop</text>
+            <text x="790" y="76" fill="#9fb3c8" text-anchor="middle" font-size="12">în afara laboratorului</text>
+            <rect x="700" y="120" width="180" height="60" rx="10" fill="#183050" stroke="#b388ff"/>
+            <text x="790" y="146" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">Tailscale / WireGuard</text>
+            <text x="790" y="166" fill="#9fb3c8" text-anchor="middle" font-size="12">tunel VPN criptat</text>
+            <rect x="700" y="200" width="180" height="56" rx="10" fill="#183050" stroke="#b388ff"/>
+            <text x="790" y="224" fill="#e7f0fa" text-anchor="middle" font-size="14" font-weight="700">DuckDNS + Let's Encrypt</text>
+            <text x="790" y="243" fill="#9fb3c8" text-anchor="middle" font-size="12">nume · certificat HTTPS</text>
+            <path id="flowA" d="M790,90 L790,120 M790,180 C760,190 690,190 650,190" stroke="#b388ff" stroke-width="2.5" fill="none" marker-end="url(#ar3)"/>
+            <path d="M700,228 L650,215" stroke="#b388ff" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#ar3)"/>
+          </g>
+        </g>
+        <circle id="pkt" r="6" fill="#18bcf2"/>
+      </svg>
+      <p style="color:var(--muted);font-size:.9rem">Verde: etapa 1 (datele intră în Home Assistant). Portocaliu: etapa 2 (datele sunt păstrate, desenate și folosite în automatizări). Violet: etapa 3 (ajungi la Home Assistant de oriunde, fără să-l expui pe internet).</p>
+    </div>
+
+    <div class="card">
+      <h2>Parcurs în 120 de minute</h2>
+      <table>
+        <tr><th>Min.</th><th>Ce faci</th></tr>
+        <tr><td>0–15</td><td>Citești arhitectura și harta apps (fila 3).</td></tr>
+        <tr><td>15–35</td><td>Parcurgi cele trei etape în bancul virtual și declanșezi cel puțin trei defecte.</td></tr>
+        <tr><td>35–95</td><td>Instalezi pe Home Assistant-ul tău etapa 1 și etapa 2, cu configurațiile din pași.</td></tr>
+        <tr><td>95–105</td><td>Verifici: un senzor ESP32 apare în Home Assistant, iar valorile lui ajung în Grafana.</td></tr>
+        <tr><td>105–120</td><td>Mini-test și fișa (capturile C1–C3), export PDF/JSON.</td></tr>
+      </table>
+      <h3>Ce predai</h3>
+      <p>Fișa din fila 5, ca PDF, cu cele trei capturi descrise și testul rezolvat. Nu treci în fișă parole, tokenuri sau chei.</p>
+    </div>
+  </section>
+
+  <!-- ================= 2 · BANC VIRTUAL ================= -->
+  <section class="tab" id="t-banc">
+    <div class="card">
+      <h2>Banc virtual: instalarea apps</h2>
+      <div class="controls">
+        <label for="routeSel">Etapa:</label>
+        <select id="routeSel">
+          <option value="baza">1 · Baza</option>
+          <option value="date">2 · Date și automatizări</option>
+          <option value="retea">3 · Acces sigur</option>
+        </select>
+        <button class="primary" id="btnPlay">▶ Pornește simularea</button>
+        <button id="btnPause">⏸ Pauză</button>
+        <button id="btnReset">⟲ Reset</button>
+        <label for="speed">Viteză</label>
+        <select id="speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select>
+      </div>
+      <div class="bar"><div id="prog"></div></div>
+      <p style="color:var(--muted);font-size:.88rem;margin:6px 0">Simularea arată ce vezi pe ecran la fiecare pas. Nu este o instalare reală.</p>
+      <div class="grid2">
+        <div>
+          <h3>Pași (configurațiile se copiază cu „Copiază”)</h3>
+          <ol class="steps" id="stepList"></ol>
+        </div>
+        <div>
+          <h3>Jurnalul app-urilor (Log)</h3>
+          <div class="console" id="console" aria-live="polite"></div>
+          <h3>Butoane de defect</h3>
+          <p style="font-size:.88rem;color:var(--muted);margin:2px 0 6px">Apasă un defect, apoi pornește simularea: vezi simptomul și diagnosticul.</p>
+          <div class="controls" id="faults"></div>
+          <div id="faultInfo"></div>
+          <div class="controls">
+            <button id="btnNote">📝 Notează cazul în fișă</button>
+            <button id="btnCsv">⬇ Export CSV jurnal</button>
+          </div>
+          <div class="status" id="bancStatus" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3 · COMPARAȚIE ================= -->
+  <section class="tab" id="t-comp">
+    <div class="card">
+      <h2>Harta apps: rol, dependențe, porturi</h2>
+      <table>
+        <tr><th>App</th><th>La ce folosește</th><th>Are nevoie de</th><th>Port / acces</th></tr>
+        <tr><td>File editor</td><td>editezi configuration.yaml din browser</td><td>—</td><td>bara laterală (Show in sidebar)</td></tr>
+        <tr><td>Terminal &amp; SSH</td><td>linie de comandă, comanda <code>ha</code></td><td>—</td><td>terminal web; SSH doar cu cheie, implicit oprit din rețea</td></tr>
+        <tr><td>Mosquitto broker</td><td>broker MQTT pentru dispozitive</td><td>un utilizator Home Assistant dedicat</td><td>1883 (8883 cu certificat)</td></tr>
+        <tr><td>ESPHome Device Builder</td><td>firmware și configurare ESP32</td><td>—</td><td>interfața web din Home Assistant</td></tr>
+        <tr><td>InfluxDB v1</td><td>istoric pe termen lung</td><td>baza și utilizatorul <code>homeassistant</code>, integrarea influxdb</td><td>8086 (API)</td></tr>
+        <tr><td>Grafana</td><td>grafice și tablouri</td><td>InfluxDB + un utilizator de citire</td><td>interfața web din Home Assistant</td></tr>
+        <tr><td>Node-RED</td><td>automatizări ca fluxuri vizuale</td><td><code>credential_secret</code> setat o singură dată</td><td>1880 / interfața web</td></tr>
+        <tr><td>DuckDNS</td><td>nume de domeniu + certificat Let's Encrypt</td><td>cont duckdns.org și token</td><td>certificatul în /ssl</td></tr>
+        <tr><td>Tailscale</td><td>VPN fără porturi deschise</td><td>cont Tailscale</td><td>niciun port de deschis</td></tr>
+        <tr><td>WireGuard</td><td>VPN propriu</td><td>nume public (ex. DuckDNS) + port deschis</td><td>51820 UDP în router</td></tr>
+      </table>
+      <div class="tip" style="margin-top:10px">Tailscale sau WireGuard? Tailscale nu cere niciun port deschis și e mai simplu pentru început. WireGuard nu depinde de un serviciu extern, dar cere portul 51820 UDP în router. Pe serverul laboratorului nu se deschide portul 8123 spre internet: accesul de la distanță se face prin VPN.</div>
+      <div class="tip">InfluxDB nu înlocuiește istoricul intern al Home Assistant (recorder); păstrează datele pe termen lung. Pe un server care rulează luni de zile, baza poate fi mutată într-un container separat.</div>
+    </div>
+  </section>
+
+  <!-- ================= 4 · MINI-TEST ================= -->
+  <section class="tab" id="t-test">
+    <div class="card">
+      <h2>Mini-test (10 întrebări)</h2>
+      <div id="quiz"></div>
+      <div class="controls"><button class="primary" id="btnQuiz">Verifică răspunsurile</button><span id="quizScore" class="status" role="status"></span></div>
+    </div>
+  </section>
+
+  <!-- ================= 5 · FIȘA ================= -->
+  <section class="tab" id="t-fisa">
+    <div class="card">
+      <h2>Fișa studentului · CONECTLAB-M02</h2>
+      <div class="grid2">
+        <div><label for="fNume">Nume și prenume</label><br><input id="fNume" style="width:100%"></div>
+        <div><label for="fGrupa">Grupa / disciplina sau tema de licență</label><br><input id="fGrupa" style="width:100%"></div>
+      </div>
+      <h3>Date de lucru</h3>
+      <label for="fGazda">Instanța Home Assistant folosită (gazdă, versiune, adresă)</label><br><input id="fGazda" style="width:100%" placeholder="ex. VMware pe laptop, HA 2026.11, 192.168.1.x">
+      <h3>Etapa la care ai ajuns</h3>
+      <select id="fRoute"><option value="baza">1 · Baza</option><option value="date">2 · Date și automatizări</option><option value="retea">3 · Acces sigur</option></select>
+      <h3>Predicție (înainte de instalare)</h3>
+      <textarea id="fPred" placeholder="Ce app trebuie instalat înaintea Grafana și de ce? Ce s-ar întâmpla dacă ai deschide portul 8123 spre internet?"></textarea>
+      <h3>Lista de verificare</h3>
+      <div id="fCheck"></div>
+      <h3>Capturi de ecran (descrie ce se vede)</h3>
+      <label for="fC1">C1 – Setări → Apps, cu apps instalate și pornite</label><textarea id="fC1"></textarea>
+      <label for="fC2">C2 – entitatea senzorului ESP32/MQTT în Home Assistant</label><textarea id="fC2"></textarea>
+      <label for="fC3">C3 – graficul aceluiași senzor în Grafana (sursa InfluxDB)</label><textarea id="fC3"></textarea>
+      <h3>Cazuri notate din bancul virtual</h3>
+      <div id="fCazuri" style="font-size:.9rem;color:var(--muted)">—</div>
+      <h3>Concluzii</h3>
+      <textarea id="fConc" placeholder="Ce a mers, ce a dat eroare și cum ai rezolvat; ce variantă de acces de la distanță ai alege pentru proiectul tău și de ce."></textarea>
+      <div class="controls noprint">
+        <button class="primary" onclick="window.print()">🖨 Tipărește / Salvează PDF</button>
+        <button id="btnJson">⬇ Export JSON</button>
+        <label class="noprint"><button id="btnImp" type="button">⬆ Import JSON</button></label>
+        <input type="file" id="fileImp" accept=".json,application/json" style="display:none">
+        <button id="btnCsv2">⬇ Export CSV</button>
+      </div>
+      <div class="status" id="fisaStatus" role="status"></div>
+    </div>
+  </section>
+
+  <!-- ================= 6 · BREVIAR ================= -->
+  <section class="tab" id="t-brev">
+    <div class="card">
+      <h2>Breviar</h2>
+      <details open><summary>App sau integrare?</summary>
+        <p><b>App</b> (fost add-on) = un program separat care rulează lângă Home Assistant, pe același sistem HAOS: Mosquitto, Grafana, Node-RED. <b>Integrare</b> = legătura din Home Assistant spre un dispozitiv sau serviciu: MQTT, ESPHome, InfluxDB. De multe ori ai nevoie de amândouă: app-ul Mosquitto este brokerul, integrarea MQTT este clientul din Home Assistant. Redenumirea add-ons → apps a venit odată cu versiunea 2026.2; în tutorialele mai vechi vei găsi încă termenul „add-on”.</p>
+      </details>
+      <details><summary>Ordinea contează</summary>
+        <ul>
+          <li>Mosquitto înaintea oricărui dispozitiv MQTT.</li>
+          <li>InfluxDB (bază + utilizator) înaintea integrării influxdb și înaintea Grafana.</li>
+          <li>DuckDNS (nume + certificat) înaintea WireGuard, care folosește numele ca adresă a serverului.</li>
+          <li>Backup complet în Home Assistant înainte de fiecare etapă.</li>
+        </ul>
+      </details>
+      <details><summary>Adrese interne între apps</summary>
+        <p>Apps comunică între ele prin rețeaua internă a Supervisorului, cu nume de forma <code>a0d7b954-influxdb</code> (prefixul depozitului de apps + numele app-ului). De aceea Grafana se leagă la <code>http://a0d7b954-influxdb:8086</code>, nu la <code>localhost</code>.</p>
+      </details>
+      <details><summary>Reguli de securitate</summary>
+        <ul>
+          <li>Mosquitto nu acceptă conexiuni anonime: fiecare dispozitiv are utilizator și parolă.</li>
+          <li>SSH din rețea doar cu chei, niciodată cu port deschis spre internet.</li>
+          <li>Tokenul DuckDNS, cheile WireGuard, <code>credential_secret</code> Node-RED și parolele nu se pun în fișă, în capturi sau pe GitHub.</li>
+          <li>Accesul de la distanță se face prin VPN (Tailscale sau WireGuard), nu prin portul 8123 deschis.</li>
+        </ul>
+      </details>
+      <details><summary>Legătura cu laboratorul</summary>
+        <p>Stația minimă a laboratorului folosește exact aceste apps: MQTT pentru nodurile ESP32 din tablouri, InfluxDB și Grafana pentru măsurări pe termen lung, Node-RED pentru prelucrări și acces de la distanță prin VPN. Modulul M01 (instalarea Home Assistant) este prerechizit.</p>
+      </details>
+      <details><summary>Bibliografie și surse</summary>
+        <ul>
+          <li>Home Assistant 2026.2 release notes – „Add-ons are now called Apps” (home-assistant.io/blog)</li>
+          <li>Documentația oficială a apps din depozitul home-assistant/addons: Mosquitto broker, File editor, Terminal &amp; SSH, DuckDNS (github.com/home-assistant/addons)</li>
+          <li>Home Assistant Community Apps: InfluxDB v1, Grafana, Node-RED, Tailscale, WireGuard (github.com/hassio-addons)</li>
+          <li>ESPHome Device Builder (github.com/esphome/home-assistant-addon, esphome.io)</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  ConectLab EB104 · UPB · Facultatea de Inginerie Electrică · An universitar 2026–2027 · <span id="verFoot"></span><br>
+  Aplicația rulează local în browser; nu transmite date și nu trimite note.
+</footer>
+
+<script>
+  'use strict';
+
+  // ---------- constante ----------
+  const VERSION = '1.0';
+  const CODE = 'CONECTLAB-M02';
+
+  // ---------- bloc comun ----------
+  function $(id) { return document.getElementById(id); }
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  // valori generice afișate în pași (nu se calculează pentru fiecare student)
+  const V = {};
+
+  function fmt(v, d) { return Number(v).toFixed(d).replace('.', ','); }
+
+  function esc(t) {
+    return String(t).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function status(id, msg) {
+    $(id).textContent = msg;
+    if (msg) { setTimeout(function () { if ($(id).textContent === msg) { $(id).textContent = ''; } }, 4000); }
+  }
+
+  function download(name, content, type) {
+    const blob = new Blob([content], { type: type });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  function nowStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function toCSV(rows) {
+    const head = ['CODE', 'VERSION', 'data_ora'];
+    const lines = [];
+    lines.push(head.concat(rows.header).join(';'));
+    rows.data.forEach(function (r) {
+      lines.push([CODE, VERSION, nowStr()].concat(r).map(function (c) {
+        return '"' + String(c).replace(/"/g, '""') + '"';
+      }).join(';'));
+    });
+    return '﻿' + lines.join('\n');
+  }
+
+  const LS_KEY = CODE + '-' + VERSION;
+
+  function saveLocal() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(collect())); }
+    catch (e) { status('fisaStatus', 'Salvarea locală nu merge în acest browser – folosește Export JSON.'); }
+  }
+
+  function restoreLocal() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) { apply(JSON.parse(raw), true); }
+    } catch (e) { /* ignorăm: pornim curat */ }
+  }
+
+  // ---------- stare ----------
+  const state = {
+    route: 'baza',
+    fault: null,
+    cases: [],
+    log: []
+  };
+
+  // ---------- etape ----------
+  function routes(v) {
+    return {
+      baza: {
+        name: 'Etapa 1 · Baza',
+        steps: [
+          { t: 'Backup înainte de orice', d: 'Setări → Sistem → Backup → backup complet. Dacă o configurație strică pornirea, revii la el în câteva minute.', c: [], con: ['[ha] Backup complet creat ✓'] },
+          { t: 'File editor', d: 'Setări → Apps → Instalează app → File editor → Install. Activezi „Show in sidebar”, pornești app-ul și reîncarci pagina: editorul apare în bara laterală. Nu cere configurare.', c: [], con: ['[file editor] Pornit · apare în bara laterală'] },
+          { t: 'Terminal & SSH', d: 'Instalezi „Terminal & SSH”, activezi „Show in sidebar”, pornești. Terminalul web îți dă linia de comandă, cu directorul de configurare în /config. Încearcă comanda de mai jos. Accesul SSH din rețea rămâne oprit: în laborator nu e nevoie de el.', c: ['ha help'], con: ['[ssh] Terminal web pornit · /config disponibil', '[ssh] $ ha help → lista comenzilor ha'] },
+          { t: 'Utilizator pentru MQTT', d: 'Setări → Persoane → Utilizatori → Adaugă utilizator (dacă nu vezi opțiunea, activează Advanced Mode în profilul tău). Un nume dedicat, de exemplu mqtt-lab. Nu poate fi „homeassistant” sau „addons”: sunt nume rezervate.', c: [], con: ['[ha] Utilizator mqtt-lab creat'] },
+          { t: 'Mosquitto broker', d: 'Instalezi și pornești „Mosquitto broker”. Apoi Setări → Dispozitive și servicii: MQTT apare ca integrare descoperită; o adaugi cu un clic. Dispozitivele se conectează la portul 1883 cu utilizatorul creat la pasul anterior; conexiunile anonime nu sunt acceptate.', c: [], con: ['[mosquitto] Broker pornit · 1883/tcp', '[ha] Integrarea MQTT adăugată ✓'] },
+          { t: 'ESPHome Device Builder', d: 'Instalezi „ESPHome Device Builder”, pornești, apeși „Open Web UI”. Autentificarea se face cu contul Home Assistant. Aici creezi și încarci firmware-ul nodurilor ESP32; nodurile apar apoi automat ca integrare ESPHome.', c: [], con: ['[esphome] Device Builder pornit', '[ha] Nod ESP32 descoperit · temperatura_t02 ✓'] }
+        ],
+        faults: {
+          resv: { b: 'Utilizator MQTT „homeassistant”', sym: ['[mosquitto] Connection refused: not authorised', '[e] Dispozitivul nu se poate conecta la broker'], dx: 'Simptom: autentificare refuzată la broker. Cauză: „homeassistant” și „addons” sunt nume rezervate de app-ul Mosquitto. Remediu: un utilizator dedicat, de exemplu mqtt-lab, creat din Setări → Persoane → Utilizatori.', at: 4, alt: { 3: ['[ha] Utilizator homeassistant creat pentru MQTT'] } },
+          anon: { b: 'Nod MQTT fără parolă', sym: ['[mosquitto] Client tasmota_t02 disconnected, not authorised', '[e] Nodul se reconectează la fiecare câteva secunde'], dx: 'Simptom: nodul apare și dispare din broker. Cauză: app-ul Mosquitto nu acceptă conexiuni anonime (allow_anonymous nu are efect). Remediu: completezi în nod utilizatorul și parola MQTT.', at: 4 },
+          ssh: { b: 'SSH cu parolă, port deschis', sym: ['[w] SSH activ pe portul 22 cu parolă', '[e] Router: port 22 redirecționat spre Home Assistant', '[e] Jurnal: sute de încercări de autentificare din internet'], dx: 'Simptom: încercări repetate de autentificare din exterior. Cauză: SSH cu parolă expus pe internet. Remediu: închizi redirecționarea portului, folosești terminalul web sau SSH doar cu chei ECDSA, din rețeaua locală ori prin VPN.', at: 2 }
+        }
+      },
+      date: {
+        name: 'Etapa 2 · Date și automatizări',
+        steps: [
+          { t: 'InfluxDB v1', d: 'Instalezi „InfluxDB v1” (din Home Assistant Community Apps), pornești, „Open Web UI” → InfluxDB Admin. Creezi baza homeassistant, apoi utilizatorul homeassistant cu permisiunea ALL pe această bază.', c: [], con: ['[influxdb] Pornit · API pe 8086', '[influxdb] Baza homeassistant creată · utilizator homeassistant (ALL)'] },
+          { t: 'Integrarea influxdb', d: 'În File editor, deschizi configuration.yaml și adaugi blocul de mai jos, cu parola ta. Apoi Setări → Sistem → Repornire. Toate schimbările de stare încep să fie scrise în InfluxDB.', c: ['influxdb:\n  api_version: 1\n  host: a0d7b954-influxdb\n  port: 8086\n  database: homeassistant\n  username: homeassistant\n  password: PAROLA_TA\n  max_retries: 3\n  default_measurement: state'], con: ['[ha] configuration.yaml valid · repornire', '[influxdb] Scrieri primite din Home Assistant ✓'] },
+          { t: 'Grafana', d: 'Instalezi și pornești „Grafana”. În InfluxDB creezi un utilizator separat pentru Grafana, doar cu drept de citire. În Grafana: Connections → Data sources → Add → InfluxDB, cu URL-ul de mai jos, baza homeassistant și utilizatorul Grafana. Save & Test, apoi primul grafic.', c: ['http://a0d7b954-influxdb:8086'], con: ['[grafana] Pornit', '[grafana] Data source InfluxDB: OK ✓', '[grafana] Panou: temperatura_t02, ultimele 24 h'] },
+          { t: 'Node-RED', d: 'Instalezi „Node-RED”. Înainte de prima pornire setezi credential_secret, o frază lungă pe care o păstrezi; dacă o schimbi mai târziu, credențialele salvate în fluxuri se pierd. Dacă nu folosești certificat, pune ssl: false. Conexiunea la Home Assistant este preconfigurată.', c: ['credential_secret: "o-fraza-lunga-doar-a-ta"', 'ssl: false'], con: ['[node-red] Pornit · conectat la Home Assistant', '[node-red] Flux test: dacă temperatura > 30 °C → notificare ✓'] }
+        ],
+        faults: {
+          nodb: { b: 'Baza homeassistant lipsă', sym: ['[ha] influxdb: database not found: "homeassistant"', '[e] Nicio valoare nu ajunge în InfluxDB'], dx: 'Simptom: integrarea dă eroare la scriere. Cauză: baza nu a fost creată în InfluxDB Admin înainte de repornirea Home Assistant. Remediu: creezi baza și utilizatorul, apoi repornești Home Assistant.', at: 1, alt: { 0: ['[influxdb] Pornit · API pe 8086', '[w] Nicio bază creată'] } },
+          local: { b: 'Grafana spre localhost', sym: ['[grafana] Data source: dial tcp 127.0.0.1:8086: connection refused', '[e] Save & Test eșuat'], dx: 'Simptom: Grafana nu ajunge la InfluxDB. Cauză: fiecare app rulează în containerul lui, iar „localhost” este chiar containerul Grafana. Remediu: adresa internă http://a0d7b954-influxdb:8086.', at: 2 },
+          secret: { b: 'credential_secret schimbat', sym: ['[node-red] Error decrypting credentials', '[e] Nodurile Home Assistant din fluxuri au pierdut conexiunea'], dx: 'Simptom: după o modificare de configurare, credențialele din fluxuri nu mai pot fi citite. Cauză: credential_secret a fost schimbat după prima pornire. Remediu: revii la valoarea inițială sau reintroduci credențialele; secretul se notează la loc sigur de la început.', at: 3 }
+        }
+      },
+      retea: {
+        name: 'Etapa 3 · Acces sigur',
+        steps: [
+          { t: 'Cont și domeniu DuckDNS', d: 'Pe duckdns.org te autentifici, adaugi un subdomeniu (de exemplu numele-tau.duckdns.org) și copiezi tokenul din pagina contului. Tokenul este secret: nu apare în fișă sau în capturi.', c: [], con: ['[duckdns.org] Domeniu numele-tau.duckdns.org creat'] },
+          { t: 'App-ul DuckDNS cu Let\'s Encrypt', d: 'Instalezi „Duck DNS”. În Configuration pui tokenul, domeniul și accept_terms: true (după ce citești acordul Let\'s Encrypt). App-ul actualizează adresa IP și obține singur certificatul, pe care îl reînnoiește automat; nu mai instalezi Let\'s Encrypt separat.', c: ['lets_encrypt:\n  accept_terms: true\n  certfile: fullchain.pem\n  keyfile: privkey.pem\ntoken: TOKENUL_TAU\ndomains:\n  - numele-tau.duckdns.org\naliases: []\nseconds: 300'], con: ['[duckdns] IP actualizat', '[duckdns] Certificat Let\'s Encrypt emis · /ssl/fullchain.pem ✓'] },
+          { t: 'Home Assistant pe HTTPS', d: 'În configuration.yaml adaugi blocul de mai jos și repornești. De acum interfața merge prin https://, iar vechiul http:// pe portul 8123 nu mai răspunde. Fă pasul doar după ce certificatul există în /ssl.', c: ['http:\n  ssl_certificate: /ssl/fullchain.pem\n  ssl_key: /ssl/privkey.pem'], con: ['[ha] HTTPS activ: https://numele-tau.duckdns.org:8123 (din rețeaua locală sau prin VPN)'] },
+          { t: 'Tailscale (varianta recomandată)', d: 'Instalezi „Tailscale”, pornești, deschizi Web UI și legi Home Assistant de contul tău Tailscale (de preferat dintr-un calculator, în Chrome). În consola Tailscale dezactivezi expirarea cheii pentru acest dispozitiv, ca să nu pierzi legătura. Niciun port deschis în router.', c: ['https://console.tailscale.com/'], con: ['[tailscale] Autentificat · homeassistant în rețeaua ta Tailscale', '[i] De pe telefon (cu Tailscale): Home Assistant accesibil ✓'] },
+          { t: 'WireGuard (alternativa proprie)', d: 'Instalezi „WireGuard”. server.host = domeniul DuckDNS; câte un peer pentru fiecare dispozitiv. Pornești app-ul, redirecționezi în router portul 51820 UDP spre Home Assistant, apoi scanezi cu aplicația WireGuard de pe telefon codul QR din /ssl/wireguard/telefon/qrcode.png.', c: ['server:\n  host: numele-tau.duckdns.org\n  addresses:\n    - 10.10.10.1\npeers:\n  - name: telefon\n    addresses:\n      - 10.10.10.2\n    allowed_ips: []\n    client_allowed_ips: []'], con: ['[wireguard] Server pornit · 51820/udp', '[wireguard] Peer telefon: handshake reușit ✓'] }
+        ],
+        faults: {
+          terms: { b: 'accept_terms: false', sym: ['[duckdns] IP actualizat', '[w] Let\'s Encrypt: termenii nu au fost acceptați', '[e] /ssl/fullchain.pem lipsește'], dx: 'Simptom: domeniul merge, dar certificatul nu apare. Cauză: lets_encrypt.accept_terms a rămas false. Remediu: citești acordul Let\'s Encrypt, pui true, repornești app-ul și urmărești jurnalul până la emiterea certificatului.', at: 1 },
+          http: { b: 'HTTPS activat fără certificat', sym: ['[ha] Could not read SSL certificate from /ssl/fullchain.pem', '[e] Interfața nu mai pornește'], dx: 'Simptom: după repornire, Home Assistant nu mai răspunde. Cauză: blocul http: trimite la un certificat care încă nu există. Remediu: din terminal sau din consola gazdei scoți blocul http:, repornești, aștepți certificatul de la DuckDNS și abia apoi activezi HTTPS.', at: 2, alt: { 1: ['[duckdns] IP actualizat', '[w] Certificatul încă nu a fost emis'] } },
+          udp: { b: 'WireGuard fără port UDP', sym: ['[wireguard] Server pornit · 51820/udp', '[e] Peer telefon: nicio strângere de mână (handshake)'], dx: 'Simptom: telefonul spune „conectat”, dar nu ajunge la Home Assistant. Cauză: portul 51820 UDP nu este redirecționat în router (sau a fost redirecționat TCP). Remediu: regula din router pe UDP 51820 spre adresa Home Assistant; dacă nu ai acces la router, folosești Tailscale.', at: 4 }
+        }
+      }
+    };
+  }
+
+  // ---------- randare pași ----------
+  function cmdBlock(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'cmd';
+    const pre = document.createElement('pre');
+    pre.textContent = text;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = 'Copiază';
+    b.addEventListener('click', function () {
+      const done = function () { b.textContent = 'Copiat ✓'; setTimeout(function () { b.textContent = 'Copiază'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { b.textContent = 'Selectează manual'; });
+      } else {
+        const r = document.createRange(); r.selectNodeContents(pre);
+        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        b.textContent = 'Ctrl+C';
+      }
+    });
+    wrap.appendChild(pre);
+    wrap.appendChild(b);
+    return wrap;
+  }
+
+  function renderSteps() {
+    const R = routes(V)[state.route];
+    const list = $('stepList');
+    list.innerHTML = '';
+    R.steps.forEach(function (s, i) {
+      const li = document.createElement('li');
+      li.id = 'st' + i;
+      const h = document.createElement('h4'); h.textContent = s.t;
+      const p = document.createElement('p'); p.textContent = s.d;
+      li.appendChild(h); li.appendChild(p);
+      s.c.forEach(function (c) { li.appendChild(cmdBlock(c)); });
+      list.appendChild(li);
+    });
+    const fb = $('faults');
+    fb.innerHTML = '';
+    Object.keys(R.faults).forEach(function (k) {
+      const b = document.createElement('button');
+      b.className = 'fault';
+      b.type = 'button';
+      b.textContent = (state.fault === k ? '● ' : '○ ') + R.faults[k].b;
+      b.addEventListener('click', function () {
+        state.fault = (state.fault === k) ? null : k;
+        resetSim();
+        renderSteps();
+        $('faultInfo').innerHTML = state.fault ? '<div class="danger">Defect activ: <b>' + esc(R.faults[k].b) + '</b>. Pornește simularea.</div>' : '';
+      });
+      fb.appendChild(b);
+    });
+  }
+
+  // ---------- simulare ----------
+  const sim = { playing: false, step: 0, line: 0, acc: 0, last: 0, failed: false, finished: false };
+
+  function conLine(txt) {
+    const div = document.createElement('div');
+    if (txt.indexOf('[e]') === 0) { div.className = 'e'; }
+    else if (txt.indexOf('[w]') === 0) { div.className = 'w'; }
+    else if (txt.indexOf('[i]') === 0) { div.className = 'i'; }
+    div.textContent = txt;
+    $('console').appendChild(div);
+    $('console').scrollTop = $('console').scrollHeight;
+    state.log.push([state.route, sim.step + 1, txt]);
+  }
+
+  function resetSim() {
+    sim.playing = false; sim.step = 0; sim.line = 0; sim.acc = 0; sim.failed = false; sim.finished = false;
+    $('console').innerHTML = '';
+    $('prog').style.width = '0';
+    state.log = [];
+    document.querySelectorAll('#stepList li').forEach(function (li) { li.className = ''; });
+  }
+
+  function tick(ts) {
+    if (!sim.playing) { return; }
+    if (!sim.last) { sim.last = ts; }
+    const dt = (ts - sim.last) * Number($('speed').value);
+    sim.last = ts;
+    sim.acc += dt;
+    if (sim.acc >= 900) {
+      sim.acc = 0;
+      advance();
+    }
+    if (sim.playing) { requestAnimationFrame(tick); }
+  }
+
+  function advance() {
+    const R = routes(V)[state.route];
+    const s = R.steps[sim.step];
+    const items = document.querySelectorAll('#stepList li');
+    items.forEach(function (li, i) {
+      if (i < sim.step) { li.className = 'done'; }
+      else if (i === sim.step) { li.className = 'now'; }
+    });
+    const f = state.fault ? R.faults[state.fault] : null;
+    if (f && sim.step === f.at && !sim.failed) {
+      if (sim.line < f.sym.length) {
+        conLine(f.sym[sim.line]); sim.line++; return;
+      }
+      sim.failed = true; sim.playing = false;
+      items[sim.step].className = 'err';
+      $('faultInfo').innerHTML = '<div class="danger"><b>Diagnostic:</b> ' + esc(f.dx) + '</div>';
+      status('bancStatus', 'Instalarea s-a oprit la pasul ' + (sim.step + 1) + '. Notează cazul în fișă.');
+      return;
+    }
+    const lines = (f && f.alt && f.alt[sim.step]) ? f.alt[sim.step] : s.con;
+    if (sim.line < lines.length) {
+      conLine(lines[sim.line]); sim.line++;
+    } else {
+      sim.step++; sim.line = 0;
+      $('prog').style.width = (100 * sim.step / R.steps.length) + '%';
+      if (sim.step >= R.steps.length) {
+        items.forEach(function (li) { li.className = 'done'; });
+        conLine('[i] ✓ ' + R.name + ' completă.');
+        sim.playing = false; sim.finished = true;
+        status('bancStatus', 'Etapă completă. Încearcă și un defect.');
+      }
+    }
+  }
+
+  function play() {
+    if (sim.failed || sim.finished) { resetSim(); }
+    if (sim.playing) { return; }
+    sim.playing = true; sim.last = 0;
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- diagrama arhitecturii ----------
+  function drawArch() {
+    document.querySelectorAll('#arcCols [data-g]').forEach(function (g) {
+      g.setAttribute('opacity', g.dataset.g === state.route ? '1' : '0.35');
+    });
+  }
+
+  // animatia pachetului pe sageata spre browser
+  let pktT = 0;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function animPkt() {
+    const path = $('flowA');
+    const L = path.getTotalLength();
+    pktT = (pktT + 0.008) % 1;
+    const p = path.getPointAtLength(pktT * L);
+    $('pkt').setAttribute('cx', p.x);
+    $('pkt').setAttribute('cy', p.y);
+    if (!reduce) { requestAnimationFrame(animPkt); }
+  }
+
+  // ---------- quiz ----------
+  const QUIZ = [
+    { q: 'Din versiunea 2026.2, unde găsești Mosquitto, Grafana sau Node-RED în Home Assistant?', o: ['Setări → Integrări', 'Setări → Apps', 'HACS → Integrations', 'Setări → Sistem → Rețea'], a: 1 },
+    { q: 'Ce nume NU poți folosi pentru utilizatorul MQTT din Mosquitto?', o: ['mqtt-lab', 'senzori', 'homeassistant', 'esp-t02'], a: 2 },
+    { q: 'Un nod MQTT fără utilizator și parolă se deconectează mereu. De ce?', o: ['Portul 1883 e greșit', 'App-ul Mosquitto nu acceptă conexiuni anonime', 'Lipsește InfluxDB', 'Nodul nu are IP fix'], a: 1 },
+    { q: 'Ce adresă pui în Grafana pentru sursa de date InfluxDB?', o: ['http://localhost:8086', 'http://a0d7b954-influxdb:8086', 'https://numele-tau.duckdns.org:8123', 'http://homeassistant.local:1883'], a: 1 },
+    { q: 'Ce trebuie făcut în InfluxDB înainte de integrarea influxdb din Home Assistant?', o: ['Nimic', 'Baza homeassistant și un utilizator cu drept de scriere', 'Un certificat Let\'s Encrypt', 'Un peer WireGuard'], a: 1 },
+    { q: 'Ai nevoie de app-ul separat „Let\'s Encrypt” dacă folosești DuckDNS?', o: ['Da, întotdeauna', 'Nu, DuckDNS obține și reînnoiește singur certificatul', 'Doar pe Raspberry Pi', 'Doar pentru WireGuard'], a: 1 },
+    { q: 'Ce se întâmplă cu credențialele din fluxuri dacă schimbi credential_secret în Node-RED?', o: ['Nimic', 'Se pierd, nu mai pot fi decriptate', 'Se mută în InfluxDB', 'Se trimit în Tailscale'], a: 1 },
+    { q: 'Ce port trebuie redirecționat în router pentru WireGuard?', o: ['8123 TCP', '1883 TCP', '51820 UDP', 'niciunul'], a: 2 },
+    { q: 'De ce e Tailscale varianta recomandată pentru început?', o: ['Nu cere niciun port deschis în router', 'E mai rapid decât Ethernetul', 'Înlocuiește MQTT', 'Nu are nevoie de cont'], a: 0 },
+    { q: 'Care e regula de acces de la distanță la serverul laboratorului?', o: ['Port 8123 deschis spre internet', 'SSH cu parolă pe portul 22', 'Doar prin VPN (Tailscale sau WireGuard)', 'Prin cloud-ul producătorului'], a: 2 }
+  ];
+
+  function renderQuiz() {
+    const box = $('quiz');
+    box.innerHTML = '';
+    QUIZ.forEach(function (it, i) {
+      const d = document.createElement('div');
+      d.className = 'q';
+      const h = document.createElement('b'); h.textContent = (i + 1) + '. ' + it.q;
+      d.appendChild(h);
+      it.o.forEach(function (o, j) {
+        const l = document.createElement('label');
+        const r = document.createElement('input');
+        r.type = 'radio'; r.name = 'q' + i; r.value = j;
+        r.addEventListener('change', saveLocal);
+        l.appendChild(r);
+        l.appendChild(document.createTextNode(' ' + o));
+        d.appendChild(l);
+      });
+      const fb = document.createElement('div'); fb.className = 'fb'; fb.id = 'fb' + i;
+      d.appendChild(fb);
+      box.appendChild(d);
+    });
+  }
+
+  function quizAnswers() {
+    return QUIZ.map(function (it, i) {
+      const r = document.querySelector('input[name="q' + i + '"]:checked');
+      return r ? Number(r.value) : null;
+    });
+  }
+
+  function checkQuiz() {
+    const ans = quizAnswers();
+    let ok = 0;
+    ans.forEach(function (a, i) {
+      const fb = $('fb' + i);
+      if (a === null) { fb.textContent = 'Fără răspuns.'; fb.style.color = 'var(--warn)'; }
+      else if (a === QUIZ[i].a) { ok++; fb.textContent = '✓ Corect.'; fb.style.color = 'var(--ok)'; }
+      else { fb.textContent = '✗ Răspuns corect: ' + QUIZ[i].o[QUIZ[i].a]; fb.style.color = 'var(--bad)'; }
+    });
+    $('quizScore').textContent = 'Scor: ' + ok + ' / ' + QUIZ.length;
+    state.quizScore = ok;
+    saveLocal();
+  }
+
+  // ---------- fisa ----------
+  const CHECKS = [
+    'Backup complet făcut înainte de prima etapă',
+    'File editor și Terminal & SSH pornite, în bara laterală',
+    'Mosquitto pornit, integrarea MQTT adăugată, utilizator MQTT dedicat',
+    'Un nod ESP32 (ESPHome sau MQTT) apare cu entitățile lui',
+    'InfluxDB primește date (baza homeassistant, integrarea influxdb)',
+    'Grafana afișează graficul unui senzor din InfluxDB',
+    'Node-RED pornit, cu credential_secret notat la loc sigur',
+    'Acces de la distanță doar prin VPN (sau etapa 3 neaplicată în laborator)'
+  ];
+
+  function renderFisa() {
+    const c = $('fCheck');
+    if (!c.children.length) {
+      CHECKS.forEach(function (t, i) {
+        const l = document.createElement('label'); l.className = 'check';
+        const x = document.createElement('input'); x.type = 'checkbox'; x.id = 'ck' + i;
+        x.addEventListener('change', saveLocal);
+        l.appendChild(x); l.appendChild(document.createTextNode(t));
+        c.appendChild(l);
+      });
+    }
+    $('fCazuri').innerHTML = state.cases.length
+      ? '<ul>' + state.cases.map(function (k) { return '<li>' + esc(k) + '</li>'; }).join('') + '</ul>'
+      : '—';
+  }
+
+  const FIELDS = ['fNume', 'fGrupa', 'fGazda', 'fPred', 'fC1', 'fC2', 'fC3', 'fConc'];
+
+  function collect() {
+    const o = { CODE: CODE, VERSION: VERSION, route: state.route, cases: state.cases, quiz: quizAnswers(), checks: [], fields: {}, date: nowStr() };
+    FIELDS.forEach(function (f) { o.fields[f] = $(f).value; });
+    CHECKS.forEach(function (_, i) { o.checks.push(!!($('ck' + i) && $('ck' + i).checked)); });
+    return o;
+  }
+
+  function apply(o, silent) {
+    if (!o || o.CODE !== CODE || typeof o.fields !== 'object') {
+      if (!silent) { status('fisaStatus', 'Fișierul nu este o fișă ' + CODE + '. Import respins.'); }
+      return false;
+    }
+    if (o.VERSION !== VERSION && !silent) { status('fisaStatus', 'Atenție: fișa e din versiunea ' + o.VERSION + ', aplicația e ' + VERSION + '.'); }
+    if (['baza', 'date', 'retea'].indexOf(o.route) >= 0) { setRoute(o.route); }
+    state.cases = Array.isArray(o.cases) ? o.cases.map(String).slice(0, 30) : [];
+    FIELDS.forEach(function (f) { if (typeof o.fields[f] === 'string') { $(f).value = o.fields[f]; } });
+    renderFisa();
+    if (Array.isArray(o.checks)) { o.checks.forEach(function (c, i) { if ($('ck' + i)) { $('ck' + i).checked = !!c; } }); }
+    if (Array.isArray(o.quiz)) {
+      o.quiz.forEach(function (a, i) {
+        const r = document.querySelector('input[name="q' + i + '"][value="' + a + '"]');
+        if (r) { r.checked = true; }
+      });
+    }
+    return true;
+  }
+
+  // ---------- traseu ----------
+  function setRoute(r) {
+    state.route = r;
+    state.fault = null;
+    $('routeSel').value = r;
+    $('fRoute').value = r;
+    $('faultInfo').innerHTML = '';
+    document.querySelectorAll('.route').forEach(function (el) { el.classList.toggle('sel', el.dataset.r === r); });
+    drawArch();
+    resetSim();
+    renderSteps();
+  }
+
+  // ---------- evenimente ----------
+  document.querySelectorAll('#tabs button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.remove('active'); });
+      document.querySelectorAll('section.tab').forEach(function (s) { s.classList.remove('active'); });
+      b.classList.add('active');
+      $(b.dataset.t).classList.add('active');
+      if (b.dataset.t === 't-fisa') { renderFisa(); }
+    });
+  });
+  document.querySelectorAll('.route').forEach(function (el) {
+    el.addEventListener('click', function () { setRoute(el.dataset.r); saveLocal(); });
+  });
+  $('routeSel').addEventListener('change', function () { setRoute(this.value); saveLocal(); });
+  $('fRoute').addEventListener('change', function () { setRoute(this.value); saveLocal(); });
+  $('btnPlay').addEventListener('click', play);
+  $('btnPause').addEventListener('click', function () { sim.playing = false; });
+  $('btnReset').addEventListener('click', resetSim);
+  $('btnQuiz').addEventListener('click', checkQuiz);
+  $('btnNote').addEventListener('click', function () {
+    const R = routes(V)[state.route];
+    let t = R.name + ': ';
+    if (sim.failed && state.fault) { t += 'defect „' + R.faults[state.fault].b + '” la pasul ' + (sim.step + 1) + ' – ' + R.faults[state.fault].dx; }
+    else if (sim.finished) { t += 'etapă completă, fără defect'; }
+    else { status('bancStatus', 'Rulează simularea până la capăt sau până la defect, apoi notează.'); return; }
+    state.cases.push(t);
+    renderFisa();
+    saveLocal();
+    status('bancStatus', 'Caz notat în fișă (' + state.cases.length + ').');
+  });
+  $('btnCsv').addEventListener('click', function () {
+    if (!state.log.length) { status('bancStatus', 'Jurnalul e gol: pornește simularea întâi.'); return; }
+    download(CODE + '_jurnal.csv', toCSV({ header: ['etapa', 'pas', 'mesaj'], data: state.log }), 'text/csv;charset=utf-8');
+  });
+  $('btnCsv2').addEventListener('click', function () {
+    const o = collect();
+    const rows = [['etapa', o.route]];
+    FIELDS.forEach(function (f) { rows.push([f, o.fields[f]]); });
+    CHECKS.forEach(function (t, i) { rows.push([t, o.checks[i] ? 'da' : 'nu']); });
+    o.cases.forEach(function (c, i) { rows.push(['caz ' + (i + 1), c]); });
+    rows.push(['scor test', state.quizScore === undefined ? 'neverificat' : state.quizScore + '/' + QUIZ.length]);
+    download(CODE + '_fisa.csv', toCSV({ header: ['camp', 'valoare'], data: rows }), 'text/csv;charset=utf-8');
+  });
+  $('btnJson').addEventListener('click', function () {
+    download(CODE + '_fisa.json', JSON.stringify(collect(), null, 2), 'application/json');
+  });
+  $('btnImp').addEventListener('click', function () { $('fileImp').click(); });
+  $('fileImp').addEventListener('change', function () {
+    const f = this.files[0];
+    if (!f) { return; }
+    const rd = new FileReader();
+    rd.onload = function () {
+      try {
+        if (apply(JSON.parse(rd.result), false)) { renderFisa(); saveLocal(); status('fisaStatus', 'Fișă importată.'); }
+      } catch (e) { status('fisaStatus', 'Fișier JSON invalid. Import respins.'); }
+    };
+    rd.readAsText(f);
+    this.value = '';
+  });
+  FIELDS.forEach(function (f) { $(f).addEventListener('input', saveLocal); });
+
+  // ---------- pornire ----------
+  $('verFoot').textContent = CODE + ' · v' + VERSION;
+  renderQuiz();
+  setRoute('baza');
+  restoreLocal();
+  renderFisa();
+  drawArch();
+  animPkt();
+</script>
+</body>
+</html>
