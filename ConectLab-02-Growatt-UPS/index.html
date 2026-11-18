@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Proiect ConectLab: control local ESPHome, tratare nul, bypass AAR și date Growatt în Home Assistant. Studiu de caz realizat în Călărași."><title>ConectLab-02 · Growatt SPF 5000 ES: automatizare de backup, tratarea nulului și date live în Home Assistant</title><style>
+  :root {
+    --navy: #0b2f4a;
+    --teal: #00838f;
+    --teal-soft: #e0f4f4;
+    --amber: #d97706;
+    --amber-soft: #fff4e0;
+    --red: #b42318;
+    --red-soft: #fdecea;
+    --green: #15803d;
+    --green-soft: #e7f6ec;
+    --ink: #1c2733;
+    --muted: #5b6b7b;
+    --line: #d5dee7;
+    --bg: #f4f7fa;
+    --card: #ffffff;
+    --code-bg: #0f1d2b;
+    --code-ink: #d9f2f2;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  header {
+    background: linear-gradient(120deg, var(--navy), var(--teal));
+    color: #fff;
+    padding: 28px 20px 22px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  header .brand { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+  header h1 { margin: 6px 0 6px; font-size: 28px; line-height: 1.2; }
+  header p { margin: 0; opacity: .92; max-width: 760px; }
+  .badges { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 13px;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; gap: 4px; overflow-x: auto; }
+  nav button {
+    border: 0; background: none; padding: 13px 14px;
+    font: inherit; font-weight: 600; color: var(--muted);
+    border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap;
+  }
+  nav button.active { color: var(--teal); border-bottom-color: var(--teal); }
+  main { padding: 22px 0 40px; }
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  h2 { color: var(--navy); margin: 0 0 10px; font-size: 22px; }
+  h3 { color: var(--navy); margin: 18px 0 8px; font-size: 17px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .note, .warn, .danger, .ok {
+    border-radius: 10px; padding: 11px 14px; margin: 12px 0; font-size: 15px;
+  }
+  .note { background: var(--teal-soft); border-left: 4px solid var(--teal); }
+  .warn { background: var(--amber-soft); border-left: 4px solid var(--amber); }
+  .danger { background: var(--red-soft); border-left: 4px solid var(--red); }
+  .ok { background: var(--green-soft); border-left: 4px solid var(--green); }
+
+  /* progres */
+  .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width .3s; }
+  .progress span { font-weight: 700; color: var(--navy); min-width: 70px; text-align: right; }
+
+  /* pași */
+  .step {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .step > summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+  }
+  .step > summary::-webkit-details-marker { display: none; }
+  .num {
+    flex: 0 0 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--navy); color: #fff; font-weight: 700;
+  }
+  .step.done .num { background: var(--green); }
+  .step .title { font-weight: 700; flex: 1; }
+  .step .where { font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line); padding: 2px 8px; border-radius: 99px; }
+  .step .body { padding: 0 18px 16px 62px; }
+  .step .body ol, .step .body ul { padding-left: 20px; }
+  .step .body li { margin: 4px 0; }
+  .check {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line);
+    font-weight: 600; color: var(--green);
+  }
+  .check input { width: 18px; height: 18px; accent-color: var(--green); }
+
+  /* cod */
+  .cmd { position: relative; margin: 8px 0 12px; }
+  .cmd pre {
+    margin: 0; background: var(--code-bg); color: var(--code-ink);
+    padding: 12px 70px 12px 14px; border-radius: 9px;
+    overflow-x: auto; font: 14px/1.45 Consolas, "Courier New", monospace;
+    white-space: pre;
+  }
+  .cmd .lbl { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .cmd button.copy {
+    position: absolute; right: 8px; bottom: 8px;
+    background: var(--teal); color: #fff; border: 0; border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer;
+  }
+  .cmd button.copy.copied { background: var(--green); }
+  code.k { background: var(--teal-soft); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
+
+  /* configurator */
+  label { display: block; font-weight: 600; font-size: 14px; margin: 10px 0 4px; }
+  input[type=text], select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line);
+    border-radius: 8px; font: inherit; background: #fff;
+  }
+  .btn {
+    background: var(--teal); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer; margin: 12px 8px 0 0;
+  }
+  .btn.ghost { background: #fff; color: var(--teal); border: 1px solid var(--teal); }
+  [role=status] { font-size: 14px; color: var(--muted); min-height: 1.4em; margin-top: 8px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); color: var(--navy); }
+  table input { width: 100%; border: 0; font: inherit; padding: 2px; background: transparent; }
+
+  .path { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .path .card h3 { margin-top: 0; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+  .tag.go { background: var(--green-soft); color: var(--green); }
+  .tag.wait { background: var(--amber-soft); color: var(--amber); }
+
+  svg text { font-family: "Segoe UI", Roboto, Arial, sans-serif; }
+  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; padding: 16px 0 30px; }
+
+  @media (max-width: 700px) {
+    .grid2, .path { grid-template-columns: 1fr; }
+    .step .body { padding-left: 18px; }
+    header h1 { font-size: 22px; }
+  }
+  @media print {
+    nav, .copy, .btn, .noprint { display: none !important; }
+    section.tab { display: block !important; }
+    details { display: block; }
+    details > .body { display: block !important; }
+    body { background: #fff; }
+    .card, .step { break-inside: avoid; }
+  }
+
+a{color:var(--teal)}a.btn{text-decoration:none;display:inline-block}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ffb547;outline-offset:3px}
+.report-banner{display:flex;gap:16px;align-items:center;text-decoration:none;color:var(--navy);background:var(--green-soft);border:1px solid #70a889;border-left:6px solid var(--green);padding:16px 20px;border-radius:12px;margin:16px 0 0}.report-banner strong{display:block;font-size:17px}.report-banner small{color:var(--muted)}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.hero-cta a{border:1px solid #ffffff80;border-radius:8px;padding:8px 14px;color:white;text-decoration:none;font-weight:600}.hero-cta a:first-child{background:white;color:var(--navy)}
+.flow-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.flow-panel{border:1px solid var(--line);border-radius:10px;padding:20px;background:#f9fbfe}.flow-panel.local{background:#f0faf5}.node{padding:12px 15px;background:white;border:1px solid #9eb7cb;border-radius:9px;text-align:center;font-weight:650}.node.cloud{border-color:#e9a3a3;background:#fff3f2}.node.local{border-color:#71b58c;background:#e7f6ec}.flow-arrow{text-align:center;font-size:23px;color:var(--teal);padding:5px}.mini{font-size:13px;color:var(--muted)}.image-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:16px;align-items:start}.image-grid figure{margin:0}.image-grid img{width:100%;border:1px solid var(--line);border-radius:9px}.image-grid .photo{height:390px;object-fit:cover;object-position:center 45%}figcaption{font-size:13px;color:var(--muted);margin-top:7px}.table-wrap{overflow:auto}
+.state-panel{display:flex;align-items:center;gap:22px;background:var(--navy);color:white;border-radius:12px;padding:24px;margin:16px 0}.led{width:52px;height:52px;flex-shrink:0;border-radius:50%;background:#15803d;box-shadow:0 0 22px #15803d88}.state-panel h3{color:white;margin:0}.state-buttons{display:flex;gap:8px;flex-wrap:wrap}.state-buttons button{border:1px solid var(--line);border-radius:8px;padding:9px 13px;background:white;color:var(--navy);font:inherit;cursor:pointer}.state-buttons button[aria-pressed=true]{border:2px solid var(--teal);background:var(--teal-soft)}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:20px}.pager .btn{margin:0}.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--teal);font-weight:700}.report-meta{display:flex;gap:10px;flex-wrap:wrap}.report-meta span{background:var(--teal-soft);padding:5px 10px;border-radius:7px;font-size:14px}.toc{display:flex;gap:10px;flex-wrap:wrap}.toc a{padding:6px 10px;background:var(--teal-soft);border-radius:7px;text-decoration:none}.muted{color:var(--muted)}.step .body p{margin:8px 0}.code-view{white-space:pre-wrap;background:var(--code-bg);color:var(--code-ink);padding:16px;border-radius:9px;font:13px/1.5 Consolas,monospace;overflow-wrap:anywhere}.section-anchor{scroll-margin-top:65px} .state-table td:first-child{font-weight:700}
+@media(max-width:700px){.flow-grid,.image-grid{grid-template-columns:1fr}.image-grid .photo{height:360px}.report-banner{padding:12px}.state-panel{padding:18px}.where{display:none}header{padding:22px 0}header h1{font-size:25px}}
+</style></head><body><header><div class="wrap"><div class="brand">ConectLab · Laboratorul de Sisteme Conectate</div><h1>Growatt SPF 5000 ES: automatizare de backup, tratarea nulului și date live în Home Assistant</h1><p>De la monitorizare prin cloud la control și date locale. Ghid interactiv al unei instalații reale: WaveShare, ESPHome, comandă frontală și bypass AAR.</p><div class="badges"><span class="badge">Cod CL-P02</span><span class="badge">v1.0</span><span class="badge">Integrare locală · LAN</span><span class="badge">ESPHome + Home Assistant</span><span class="badge">Ghiulaiu Florin Daniel</span></div><div class="hero-cta"><a href="#t2" data-open="t2">Parcurge proiectul →</a><a href="raport-implementare.html">Vezi raportul de implementare</a></div></div></header>
+<div class="wrap"><a class="report-banner" href="raport-implementare.html"><span aria-hidden="true" style="font-size:30px">✓</span><div><strong>Rezolvare aplicată în Călărași · raport de implementare</strong><small>Instalație realizată de Ghiulaiu Florin Daniel: control local, tratarea nulului, bypass și telemetrie. Arhitectură, fotografie, schemă și stadiul verificărilor.</small></div></a></div>
+<nav aria-label="Etapele proiectului"><div class="wrap" role="tablist"><button id="tab-t1" role="tab" aria-selected="true" aria-controls="t1" class="active" data-tab="t1">1 · Începe aici</button><button id="tab-t2" role="tab" aria-selected="false" aria-controls="t2" data-tab="t2">2 · Pașii proiectului</button><button id="tab-t3" role="tab" aria-selected="false" aria-controls="t3" data-tab="t3">3 · LED și operare</button><button id="tab-t4" role="tab" aria-selected="false" aria-controls="t4" data-tab="t4">4 · Cod și Home Assistant</button><button id="tab-t5" role="tab" aria-selected="false" aria-controls="t5" data-tab="t5">5 · Măsurare și verificare</button><button id="tab-t6" role="tab" aria-selected="false" aria-controls="t6" data-tab="t6">6 · Documentație</button></div></nav>
+<main class="wrap"><section id="t1" class="tab active" role="tabpanel" aria-labelledby="tab-t1"><div class="card"><h2>Ideea ConectLab: date și logică locală</h2><p>Growatt are o cale de monitorizare prin stick și cloud. Proiectul adaugă o cale locală, prin același controler care gestionează comenzile: datele ajung în Home Assistant, iar secvențele sunt executate în ESPHome.</p><div class="flow-grid" role="img" aria-label="Comparație: monitorizare prin cloud și integrare locală ConectLab"><div class="flow-panel"><h3>ÎNAINTE · monitorizare prin cloud</h3><div class="node">Growatt + stick de monitorizare</div><div class="flow-arrow">↓</div><div class="node cloud">Internet · platforma cloud Growatt</div><div class="flow-arrow">↓</div><div class="node">Aplicație / portal de monitorizare</div><p class="mini">Disponibilitatea monitorizării la distanță depinde de comunicație și de platformă. Invertorul își poate continua funcțiile locale.</p></div><div class="flow-panel local"><h3>DUPĂ · abordarea ConectLab</h3><div class="node">Growatt ↔ WaveShare + ESPHome</div><div class="flow-arrow">↕ LAN · API ESPHome</div><div class="node local">Home Assistant · date și istoric local</div><div class="flow-arrow">↕ logică executată pe controler</div><div class="node">Intrări DI · ieșiri DO · LED RGB</div><p class="mini">Calea locală nu folosește stick-ul sau cloud-ul pentru schimbul de date cu Home Assistant. Nu se afirmă că stick-ul a fost eliminat ori blocat.</p></div></div></div><div class="grid2"><div class="card"><span class="tag go">CONTROL LOCAL</span><h3>O secvență executată lângă echipament</h3><p>Intrările DI, ieșirile DO și LED-ul sunt gestionate pe WaveShare. Home Assistant oferă afișare, istoric și comenzi de nivel superior.</p></div><div class="card"><span class="tag wait">SISTEM REAL</span><h3>Backup, N–PE și bypass documentate separat</h3><p>Funcțiile sunt analizate distinct: alimentare AC, ieșire către consumatori, referința neutrului și calea AAR. Starea software nu este confundată cu poziția contactorului.</p></div></div><div class="card"><h2>Tabloul și schema funcțională</h2><div class="image-grid"><figure><img class="photo" src="https://raw.githubusercontent.com/conectlab-upb/Growatt/main/tablou-growatt.png" alt="Tabloul real al instalației din Călărași, cu WaveShare și contactori" loading="lazy"><figcaption>Instalația din Călărași · Ghiulaiu Florin Daniel.</figcaption></figure><figure><a href="https://raw.githubusercontent.com/conectlab-upb/Growatt/main/schema-unifilara.svg" target="_blank" rel="noopener"><img src="https://raw.githubusercontent.com/conectlab-upb/Growatt/main/schema-unifilara.svg" alt="Schema unifilară: alimentare, cale Growatt, bypass și detaliu N–PE" loading="lazy"></a><figcaption>Schema unifilară funcțională. Apasă pentru desenul la rezoluție completă.</figcaption></figure></div></div><div class="note">Ghidul nu este un proiect de execuție electrică. Nu sunt publicate borne sau dimensionări neconfirmate. Replicarea circuitelor de putere necesită proiectare și verificare pentru instalația concretă.</div></section>
+<section id="t2" class="tab" role="tabpanel" aria-labelledby="tab-t2"><div class="card"><h2>Opt pași pentru parcurgerea proiectului</h2><p>Parcursul urmărește înțelegerea, integrarea și documentarea configurației. Progresul reprezintă lectura pașilor, nu validarea instalației.</p><div class="progress"><div class="bar"><div id="progressbar"></div></div><span id="progresslabel">0 / 8</span></div><button class="btn ghost" id="reset-progress">Resetează progresul</button></div><details class="step" id="step-1" open><summary><span class="num">1</span><span class="title">Identifică arhitectura și limitele surselor</span><span class="where">Documentare</span></summary><div class="body"><ol><li>Urmărește alimentarea comună din ieșirea DEYE până la derivația din amonte de C1.</li><li>Separă calea C1 → Growatt → C3 de calea de bypass prin C4.</li><li>Identifică diferențialele din aval și rolul separat al legăturii N–PE prin C2.</li></ol><div class="note">Bypass-ul ocolește C1 și Growatt. Alimentarea din amonte este comună; nu este o a doua sursă energetică independentă.</div><label class="check"><input type="checkbox" data-step="1"> Am parcurs acest pas</label></div></details><details class="step" id="step-2" ><summary><span class="num">2</span><span class="title">Asociază intrările și ieșirile controlerului</span><span class="where">WaveShare</span></summary><div class="body"><div class="table-wrap"><table><tr><th>Semnal</th><th>Funcție documentată</th></tr><tr><td>DI1</td><td>Comută DO1 la schimbarea stării, după inițializare.</td></tr><tr><td>DI2</td><td>Comanda frontală asociată DO2 / C3, confirmată de realizator.</td></tr><tr><td>DO1</td><td>C1 – alimentare AC Growatt.</td></tr><tr><td>DO2</td><td>C3 – ieșire către consumatori.</td></tr><tr><td>DO3</td><td>C2 – legătura N–PE.</td></tr></table></div><p>Starea software descrie comanda. Poziția contactelor se confirmă prin reacții fizice, dacă sunt prevăzute în schemă.</p><label class="check"><input type="checkbox" data-step="2"> Am parcurs acest pas</label></div></details><details class="step" id="step-3" ><summary><span class="num">3</span><span class="title">Examinează logica locală ESPHome</span><span class="where">ESPHome</span></summary><div class="body"><ol><li>Deschide configurația controlerului existent în ESPHome Device Builder.</li><li>Identifică interblocarea DO1/DO3 și temporizările asociate.</li><li>Examinează <code class="k">on_boot</code>, restaurarea stărilor și comportamentul la pierderea API.</li><li>Păstrează datele de acces în afara materialelor publice.</li></ol><p>Acest ghid documentează instalația existentă. Extrasul din fila „Cod și Home Assistant” nu este un firmware complet și nu include toate condițiile necesare unei alte instalații.</p><label class="check"><input type="checkbox" data-step="3"> Am parcurs acest pas</label></div></details><details class="step" id="step-4" ><summary><span class="num">4</span><span class="title">Identifică achiziția locală a datelor Growatt</span><span class="where">Telemetrie</span></summary><div class="body"><p>Același WaveShare preia datele invertorului și le expune în Home Assistant, conform configurației descrise. În implementare sunt folosite comunicații locale; stick-ul de monitorizare cloud reprezintă o cale separată.</p><ol><li>Identifică în configurație magistrala și componentele de interogare ale invertorului.</li><li>Notează intervalele reale de actualizare ale parametrilor.</li><li>Distinge o valoare neschimbată de o entitate indisponibilă.</li></ol><div class="note">„Live” înseamnă date actualizate periodic. Nu implică timp real garantat și nu substituie confirmarea contactorilor.</div><label class="check"><input type="checkbox" data-step="4"> Am parcurs acest pas</label></div></details><details class="step" id="step-5" ><summary><span class="num">5</span><span class="title">Conectează dispozitivul existent în Home Assistant</span><span class="where">Home Assistant</span></summary><div class="body"><ol><li>Deschide <b>Configurare → Dispozitive și servicii</b>.</li><li>Configurează dispozitivul ESPHome descoperit sau alege <b>Adaugă integrare → ESPHome</b>.</li><li>Introdu adresa locală a dispozitivului tău și cheia API, dacă este configurată.</li><li>Verifică entitățile create și numele lor efective.</li></ol><p>Integrarea este pentru un controler deja configurat. Nu este necesară publicarea unei chei, a unei parole sau a adresei instalației.</p><label class="check"><input type="checkbox" data-step="5"> Am parcurs acest pas</label></div></details><details class="step" id="step-6" ><summary><span class="num">6</span><span class="title">Construiește o afișare fără comenzi accidentale</span><span class="where">Dashboard</span></summary><div class="body"><p>Folosește exemplul Markdown din fila „Cod și Home Assistant”. Cardul afișează comenzile DO1/DO2/DO3 și păstrează explicit stările indisponibil și necunoscut.</p><ol><li>Verifică identificatorii în instalația ta.</li><li>Adaugă un card manual în dashboard-ul ales.</li><li>Inserează exemplul și verifică etichetele.</li></ol><div class="note">Exemplul de afișare nu apelează servicii de comutare. Simulatorul de pe această pagină nu comandă instalația.</div><label class="check"><input type="checkbox" data-step="6"> Am parcurs acest pas</label></div></details><details class="step" id="step-7" ><summary><span class="num">7</span><span class="title">Interpretează LED-ul și comanda frontală</span><span class="where">Operare</span></summary><div class="body"><p>În fila „LED și operare” găsești cele patru combinații DO1/DO2 și interpretarea butonului DI2. LED-ul este reevaluat local la fiecare secundă în configurația analizată.</p><p>Acționarea comenzii frontale este folosită pentru retragerea comandată a ieșirii Growatt. Cuplarea efectivă a bypass-ului trebuie stabilită din logica AAR și din starea fizică a ansamblului.</p><label class="check"><input type="checkbox" data-step="7"> Am parcurs acest pas</label></div></details><details class="step" id="step-8" ><summary><span class="num">8</span><span class="title">Documentează verificările și mentenanța</span><span class="where">Validare</span></summary><div class="body"><p>Folosește fila „Măsurare și verificare” pentru limitele verificării cu multimetrul și raportul separat pentru trasabilitate.</p><ol><li>Documentează configurația, versiunea firmware și corespondența bornelor.</li><li>Înregistrează verificările electrice prin persoană competentă și aparate potrivite.</li><li>Păstrează rezultatele reale pentru regimul AC, baterie și bypass.</li></ol><div class="warn">Bifarea pașilor confirmă numai parcurgerea ghidului. Nu este punere în funcțiune, test electric sau certificat de conformitate.</div><label class="check"><input type="checkbox" data-step="8"> Am parcurs acest pas</label></div></details></section>
+<section id="t3" class="tab" role="tabpanel" aria-labelledby="tab-t3"><div class="card"><span class="eyebrow">Simulator didactic · fără echipamente conectate</span><h2>Recunoști starea dintr-o privire</h2><p>Selectează o combinație DO1/DO2. Aceasta reproduce codificarea LED-ului, fără a transmite comenzi.</p><div class="state-buttons"><button data-state="11" aria-pressed="true">Verde · AC + ieșire</button><button data-state="10" aria-pressed="false">Albastru · AC</button><button data-state="01" aria-pressed="false">Galben · ieșire</button><button data-state="00" aria-pressed="false">Roșu · comenzi oprite</button></div><div class="state-panel" aria-live="polite"><span class="led" id="led"></span><div><h3 id="state-title">Verde · DO1 ON / DO2 ON</h3><p id="state-text">Alimentarea AC și conectarea consumatorilor sunt comandate.</p></div></div><p class="mini">Actualizare locală a LED-ului la 1 s, luminozitate 80%, conform configurației analizate. DO3 și C4 nu sunt incluse direct în calculul culorii.</p></div><div class="grid2"><div class="card"><h2>DI2 · butonul frontal</h2><p>Realizatorul confirmă comanda frontală pe DI2. Efectul descris este oprirea contactorului C3 de la ieșirea Growatt, utilă pentru retragerea acestei căi în vederea utilizării bypass-ului.</p><p>Transferul efectiv către C4 se stabilește din logica AAR și din pozițiile reale ale contactorilor.</p></div><div class="card"><h2>Mentenanță și energie reziduală</h2><p>Oprirea C3 nu izolează toate sursele invertorului. Alimentarea AC, bateria și eventualele circuite PV rămân surse distincte.</p><div class="warn">Butonul frontal nu este prezentat ca separator de siguranță. Izolarea și verificarea absenței tensiunii se realizează prin procedura instalației.</div></div></div></section>
+<section id="t4" class="tab" role="tabpanel" aria-labelledby="tab-t4"><div class="card"><h2>De ce logica locală este în ESPHome</h2><p>Interblocarea și întârzierile sunt executate pe WaveShare. Fiecare pas al secvenței nu trebuie să parcurgă serverul Home Assistant. Același echipament furnizează și telemetria locală.</p><div class="table-wrap"><table><tr><th>ESPHome / WaveShare</th><th>Home Assistant</th></tr><tr><td>Intrări locale, ieșiri, temporizări, interblocare software și LED</td><td>Dashboard, istoric, supraveghere și comenzi de nivel superior</td></tr></table></div><p>Controlerul rămâne o resursă comună pentru comandă și date. Comportamentul la pierderea API se verifică inclusiv prin <code class="k">reboot_timeout</code>; execuția locală nu este o garanție de siguranță sau de funcționare la orice defect.</p></div><div class="card"><h2>Extras de logică documentată</h2><p>Fragment explicativ, incomplet pentru instalare. Interblocarea software nu confirmă pozițiile fizice ale C1/C2.</p><pre class="code-view"># Extras documentar din proprietățile DO1.
+# Nu este o configurație completă de instalat.
+id: do1
+restore_mode: RESTORE_DEFAULT_OFF
+interlock: [do3]
+interlock_wait_time: 1s
+on_turn_off:
+  - delay: 2s
+  - if:
+      condition:
+        switch.is_off: do1
+      then:
+        - switch.turn_on: do3
+
+# Proprietăți relevante DO3:
+# interlock: [do1]
+# interlock_wait_time: 2s
+# restore_mode: ALWAYS_OFF</pre></div><div class="card"><h2>Card Home Assistant · doar afișare</h2><p>Într-un dashboard, adaugă un card manual și adaptează identificatorii dispozitivului existent. Exemplul nu oferă butoane de comutare.</p><div class="cmd"><pre id="ha-code">type: markdown
+title: Growatt UPS · stări de comandă
+content: &gt;-
+  {% set labels = {&#x27;on&#x27;: &#x27;ACTIVĂ&#x27;, &#x27;off&#x27;: &#x27;INACTIVĂ&#x27;,
+    &#x27;unavailable&#x27;: &#x27;INDISPONIBIL&#x27;, &#x27;unknown&#x27;: &#x27;NECUNOSCUT&#x27;} %}
+  {% set ac = states(&#x27;switch.waveshare_di8_do8_do1_retea&#x27;) %}
+  {% set out = states(&#x27;switch.waveshare_di8_do8_do2_sarcina&#x27;) %}
+  {% set npe = states(&#x27;switch.waveshare_di8_do8_do3_nul_invertor&#x27;) %}
+
+  **Comandă alimentare AC:** {{ labels.get(ac, &#x27;NECUNOSCUT&#x27;) }}
+
+  **Comandă ieșire Growatt:** {{ labels.get(out, &#x27;NECUNOSCUT&#x27;) }}
+
+  **Comandă legătură N–PE:** {{ labels.get(npe, &#x27;NECUNOSCUT&#x27;) }}
+
+  *Comenzi software; fără confirmare mecanică a contactorilor.*</pre><button class="copy" id="copy-code">Copiază</button></div><div id="copy-status" role="status"></div><p class="mini">Exemplul este documentar; instalarea lui nu este un test electric al instalației.</p></div></section>
+<section id="t5" class="tab" role="tabpanel" aria-labelledby="tab-t5"><div class="card"><h2>Multimetrul oferă indicii. Testerul validează protecția.</h2><p>Măsurările pe circuite de rețea se efectuează de o persoană competentă, cu aparat, sonde și categorie de măsurare adecvate punctului verificat. Tabelul este un ghid de interpretare, nu o invitație la intervenție în tabloul alimentat.</p><div class="table-wrap"><table><tr><th>Mărime</th><th>Interpretare orientativă</th><th>Limită</th></tr><tr><td>L–N</td><td>Aproape de tensiunea nominală a ieșirii, de ordinul 230 V AC în sistemul descris.</td><td>Nu confirmă legătura N–PE.</td></tr><tr><td>L–PE</td><td>Poate fi apropiată de L–N într-o sursă referențiată corespunzător.</td><td>Un multimetru cu impedanță mare poate afișa tensiuni aparente.</td></tr><tr><td>N–PE</td><td>O tensiune mică poate fi compatibilă cu referențierea neutrului, în funcție de sarcină și de locul măsurării.</td><td>Nu dovedește singură existența unei legături corecte și de impedanță redusă.</td></tr></table></div><div class="warn">Nu se folosește domeniul Ω / continuitate pe circuite sub tensiune. Nu se improvizează punți N–PE, scurtcircuite, rezistențe sau lămpi de test pentru a provoca declanșarea.</div></div><div class="grid2"><div class="card"><h2>Tensiuni aparente</h2><p>Cuplajele capacitive și filtrele pot produce citiri înșelătoare la un aparat cu impedanță mare. Citirile „împărțite” între conductoare și PE pot sugera o ieșire flotantă, dar nu reprezintă o diagnoză definitivă.</p><p>Alegerea unei metode cu impedanță adecvată revine persoanei care efectuează verificarea; nu se schimbă automat modul aparatului fără evaluarea circuitului.</p><a href="https://www.fluke.com/en-us/learn/blog/digital-multimeters/dual-impedance-digital-multimeters">Referință tehnică Fluke →</a></div><div class="card"><h2>Verificarea completă</h2><p>Confirmarea schemei N/PE, continuitatea PE și testele RCD se documentează separat. Testerul de instalații poate verifica declanșarea RCD; multimetrul de tensiune nu măsoară acest timp.</p><p>Verificările trebuie să acopere alimentarea AC, regimul pe baterie și bypass-ul, fără teste de defect improvizate.</p><a href="https://www.fluke.com/en/product/electrical-testing/installation-testers/fluke-1652c">Funcții de testare a instalațiilor →</a></div></div><div class="card"><h2>Registru de verificări</h2><table><tr><th>Element</th><th>Dovadă necesară</th><th>Statut în studiul public</th></tr><tr><td>Legături PE și N–PE</td><td>Schemă verificată și raport de măsurare</td><td>Nu este furnizat</td></tr><tr><td>Diferențiale în cele trei regimuri</td><td>Rezultate instrumentate</td><td>Nu sunt furnizate</td></tr><tr><td>Transfer C3/C4</td><td>Stări fizice și timpi înregistrați</td><td>Nu sunt furnizate</td></tr></table></div></section>
+<section id="t6" class="tab" role="tabpanel" aria-labelledby="tab-t6"><div class="card"><h2>Documentația proiectului</h2><p>Ghidul interactiv și raportul sunt completate de studiul tehnic și de sursele oficiale.</p><p><a class="btn" href="raport-implementare.html">Raportul implementării din Călărași →</a><a class="btn ghost" href="https://github.com/conectlab-upb/Growatt/blob/main/ARTICOL.md">Studiul de caz →</a></p><h3>Materiale</h3><ul><li><a href="https://github.com/conectlab-upb/Growatt/blob/main/AUTOMATIZARE.md">Analiza configurației ESPHome</a></li><li><a href="https://github.com/conectlab-upb/Growatt/blob/main/HOME_ASSISTANT.md">Integrarea Home Assistant</a></li><li><a href="https://github.com/conectlab-upb/Growatt/blob/main/VALIDARE.md">Planul de validare</a></li><li><a href="https://raw.githubusercontent.com/conectlab-upb/Growatt/main/schema-unifilara.svg">Schema unifilară funcțională</a></li></ul></div><div class="card"><h2>Referințe tehnice</h2><ul><li><a href="https://esphome.io/components/switch/gpio/">ESPHome · interblocare GPIO</a></li><li><a href="https://esphome.io/components/api/">ESPHome · API și pierderea comunicației</a></li><li><a href="https://www.home-assistant.io/integrations/esphome/">Home Assistant · integrarea ESPHome</a></li><li><a href="https://www.victronenergy.com/media/pg/The_Wiring_Unlimited_book/en/ground,-earth-and-electrical-safety.html">Victron · principii N–PE și RCD</a></li><li><a href="https://www.electrical-installation.org/enwiki/Description_of_RCDs">Schneider Electric · principiul RCD</a></li></ul><p>Referințele explică principii și platforme; nu certifică instalația Growatt. Modelul și revizia hardware impun documentația proprie a producătorului.</p></div></section>
+<div class="pager"><button class="btn ghost" id="prev">← Înapoi</button><button class="btn" id="next">Pasul următor →</button></div></main><footer><div class="wrap"><b>ConectLab · CL-P02 · v1.0</b> · Realizator: Ghiulaiu Florin Daniel · Călărași<br>© 2026 Ghiulaiu Florin Daniel, pentru contribuțiile originale protejabile. <a href="https://github.com/conectlab-upb/Growatt/blob/main/LICENSE">Drepturi și atribuiri</a> · <a href="https://conectlab-upb.github.io/#proiecte">Catalogul ConectLab</a><br>Pagina este documentară. Simulatorul și progresul funcționează în browser; nu există conexiune la echipamentele instalației. Imaginile sunt încărcate de pe GitHub.</div></footer><script>const tabs=[...document.querySelectorAll('[data-tab]')];function showTab(id,scroll=true){if(!document.getElementById(id)?.matches('.tab'))id='t1';tabs.forEach(b=>{let on=b.dataset.tab===id;b.classList.toggle('active',on);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1});document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id===id));history.replaceState(null,'','#'+id);let n=tabs.findIndex(b=>b.dataset.tab===id);document.getElementById('prev').disabled=n===0;document.getElementById('next').disabled=n===tabs.length-1;if(scroll)document.querySelector('nav').scrollIntoView({behavior:'auto',block:'start'})}tabs.forEach((b,i)=>{b.addEventListener('click',()=>showTab(b.dataset.tab));b.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();let j=(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;showTab(tabs[j].dataset.tab);tabs[j].focus()}})});document.querySelectorAll('[data-open]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();showTab(a.dataset.open)}));for(let [id,dir] of [['prev',-1],['next',1]])document.getElementById(id).addEventListener('click',()=>{let n=tabs.findIndex(b=>b.getAttribute('aria-selected')==='true');if(tabs[n+dir])showTab(tabs[n+dir].dataset.tab)});showTab(location.hash.slice(1)||'t1',false);
+const checks=[...document.querySelectorAll('[data-step]')];let stored=[];try{stored=JSON.parse(localStorage.getItem('conectlab-growatt-reading')||'[]');if(!Array.isArray(stored))stored=[]}catch{}function progress(){let done=checks.filter(c=>c.checked);checks.forEach(c=>c.closest('.step').classList.toggle('done',c.checked));document.getElementById('progressbar').style.width=(done.length/checks.length*100)+'%';document.getElementById('progresslabel').textContent=done.length+' / '+checks.length;try{localStorage.setItem('conectlab-growatt-reading',JSON.stringify(done.map(c=>c.dataset.step)))}catch{}}checks.forEach(c=>{c.checked=stored.includes(c.dataset.step);c.addEventListener('change',progress)});progress();document.getElementById('reset-progress').addEventListener('click',()=>{checks.forEach(c=>c.checked=false);progress()});
+const states={'11':['#22c55e','Verde · DO1 ON / DO2 ON','Alimentarea AC și conectarea consumatorilor sunt comandate.'],'10':['#38bdf8','Albastru · DO1 ON / DO2 OFF','Alimentarea AC este comandată; conectarea consumatorilor nu este comandată.'],'01':['#facc15','Galben · DO1 OFF / DO2 ON','Alimentarea AC nu este comandată; conectarea consumatorilor este comandată. Nu confirmă singur funcționarea pe baterie.'],'00':['#ef4444','Roșu · DO1 OFF / DO2 OFF','Ambele comenzi sunt oprite. În această logică, roșul nu este un cod dedicat de avarie.']};document.querySelectorAll('[data-state]').forEach(b=>b.addEventListener('click',()=>{const [color,title,text]=states[b.dataset.state];document.getElementById('led').style.background=color;document.getElementById('led').style.boxShadow='0 0 24px '+color+'88';document.getElementById('state-title').textContent=title;document.getElementById('state-text').textContent=text;document.querySelectorAll('[data-state]').forEach(x=>x.setAttribute('aria-pressed',x===b))}));document.getElementById('copy-code').addEventListener('click',async()=>{let status=document.getElementById('copy-status');try{await navigator.clipboard.writeText(document.getElementById('ha-code').textContent);status.textContent='Exemplul a fost copiat.'}catch{status.textContent='Selectează și copiază manual textul din exemplu.'}});</script></body></html>
