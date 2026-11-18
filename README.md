@@ -11,7 +11,7 @@ UPB, Facultatea de Inginerie Electrică, sala EB104. IIoT pentru ingineria elect
 | Cod | Proiect | Aplicație |
 |---|---|---|
 | ConectLab-01 | Sinotimer SVP-688W local, fără cloud | [conectlab-upb.github.io/ConectLab-01-Sinotimer-Local](https://conectlab-upb.github.io/ConectLab-01-Sinotimer-Local/) |
-| ConectLab-02 | Growatt UPS: comandă locală ESPHome, tratarea nulului și bypass AAR | [Studiu de caz și scheme](https://github.com/conectlab-upb/Growatt) |
+| ConectLab-02 | Growatt SPF 5000 ES: automatizare de backup, tratarea nulului și date live în Home Assistant | [Ghid interactiv și raport](https://conectlab-upb.github.io/ConectLab-02-Growatt-UPS/) |
 
 ## Module de învățare (M0x)
 
