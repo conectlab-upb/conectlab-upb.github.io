@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Proiect ConectLab: control local ESPHome, tratare nul, bypass AAR și date Growatt în Home Assistant. Studiu de caz realizat în Călărași."><title>ConectLab-02 · Raport de implementare · Călărași</title><style>
+  :root {
+    --navy: #0b2f4a;
+    --teal: #00838f;
+    --teal-soft: #e0f4f4;
+    --amber: #d97706;
+    --amber-soft: #fff4e0;
+    --red: #b42318;
+    --red-soft: #fdecea;
+    --green: #15803d;
+    --green-soft: #e7f6ec;
+    --ink: #1c2733;
+    --muted: #5b6b7b;
+    --line: #d5dee7;
+    --bg: #f4f7fa;
+    --card: #ffffff;
+    --code-bg: #0f1d2b;
+    --code-ink: #d9f2f2;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  header {
+    background: linear-gradient(120deg, var(--navy), var(--teal));
+    color: #fff;
+    padding: 28px 20px 22px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  header .brand { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+  header h1 { margin: 6px 0 6px; font-size: 28px; line-height: 1.2; }
+  header p { margin: 0; opacity: .92; max-width: 760px; }
+  .badges { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 13px;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; gap: 4px; overflow-x: auto; }
+  nav button {
+    border: 0; background: none; padding: 13px 14px;
+    font: inherit; font-weight: 600; color: var(--muted);
+    border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap;
+  }
+  nav button.active { color: var(--teal); border-bottom-color: var(--teal); }
+  main { padding: 22px 0 40px; }
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  h2 { color: var(--navy); margin: 0 0 10px; font-size: 22px; }
+  h3 { color: var(--navy); margin: 18px 0 8px; font-size: 17px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .note, .warn, .danger, .ok {
+    border-radius: 10px; padding: 11px 14px; margin: 12px 0; font-size: 15px;
+  }
+  .note { background: var(--teal-soft); border-left: 4px solid var(--teal); }
+  .warn { background: var(--amber-soft); border-left: 4px solid var(--amber); }
+  .danger { background: var(--red-soft); border-left: 4px solid var(--red); }
+  .ok { background: var(--green-soft); border-left: 4px solid var(--green); }
+
+  /* progres */
+  .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width .3s; }
+  .progress span { font-weight: 700; color: var(--navy); min-width: 70px; text-align: right; }
+
+  /* pași */
+  .step {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .step > summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+  }
+  .step > summary::-webkit-details-marker { display: none; }
+  .num {
+    flex: 0 0 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--navy); color: #fff; font-weight: 700;
+  }
+  .step.done .num { background: var(--green); }
+  .step .title { font-weight: 700; flex: 1; }
+  .step .where { font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line); padding: 2px 8px; border-radius: 99px; }
+  .step .body { padding: 0 18px 16px 62px; }
+  .step .body ol, .step .body ul { padding-left: 20px; }
+  .step .body li { margin: 4px 0; }
+  .check {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line);
+    font-weight: 600; color: var(--green);
+  }
+  .check input { width: 18px; height: 18px; accent-color: var(--green); }
+
+  /* cod */
+  .cmd { position: relative; margin: 8px 0 12px; }
+  .cmd pre {
+    margin: 0; background: var(--code-bg); color: var(--code-ink);
+    padding: 12px 70px 12px 14px; border-radius: 9px;
+    overflow-x: auto; font: 14px/1.45 Consolas, "Courier New", monospace;
+    white-space: pre;
+  }
+  .cmd .lbl { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .cmd button.copy {
+    position: absolute; right: 8px; bottom: 8px;
+    background: var(--teal); color: #fff; border: 0; border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer;
+  }
+  .cmd button.copy.copied { background: var(--green); }
+  code.k { background: var(--teal-soft); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
+
+  /* configurator */
+  label { display: block; font-weight: 600; font-size: 14px; margin: 10px 0 4px; }
+  input[type=text], select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line);
+    border-radius: 8px; font: inherit; background: #fff;
+  }
+  .btn {
+    background: var(--teal); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer; margin: 12px 8px 0 0;
+  }
+  .btn.ghost { background: #fff; color: var(--teal); border: 1px solid var(--teal); }
+  [role=status] { font-size: 14px; color: var(--muted); min-height: 1.4em; margin-top: 8px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); color: var(--navy); }
+  table input { width: 100%; border: 0; font: inherit; padding: 2px; background: transparent; }
+
+  .path { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .path .card h3 { margin-top: 0; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+  .tag.go { background: var(--green-soft); color: var(--green); }
+  .tag.wait { background: var(--amber-soft); color: var(--amber); }
+
+  svg text { font-family: "Segoe UI", Roboto, Arial, sans-serif; }
+  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; padding: 16px 0 30px; }
+
+  @media (max-width: 700px) {
+    .grid2, .path { grid-template-columns: 1fr; }
+    .step .body { padding-left: 18px; }
+    header h1 { font-size: 22px; }
+  }
+  @media print {
+    nav, .copy, .btn, .noprint { display: none !important; }
+    section.tab { display: block !important; }
+    details { display: block; }
+    details > .body { display: block !important; }
+    body { background: #fff; }
+    .card, .step { break-inside: avoid; }
+  }
+
+a{color:var(--teal)}a.btn{text-decoration:none;display:inline-block}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #ffb547;outline-offset:3px}
+.report-banner{display:flex;gap:16px;align-items:center;text-decoration:none;color:var(--navy);background:var(--green-soft);border:1px solid #70a889;border-left:6px solid var(--green);padding:16px 20px;border-radius:12px;margin:16px 0 0}.report-banner strong{display:block;font-size:17px}.report-banner small{color:var(--muted)}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.hero-cta a{border:1px solid #ffffff80;border-radius:8px;padding:8px 14px;color:white;text-decoration:none;font-weight:600}.hero-cta a:first-child{background:white;color:var(--navy)}
+.flow-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.flow-panel{border:1px solid var(--line);border-radius:10px;padding:20px;background:#f9fbfe}.flow-panel.local{background:#f0faf5}.node{padding:12px 15px;background:white;border:1px solid #9eb7cb;border-radius:9px;text-align:center;font-weight:650}.node.cloud{border-color:#e9a3a3;background:#fff3f2}.node.local{border-color:#71b58c;background:#e7f6ec}.flow-arrow{text-align:center;font-size:23px;color:var(--teal);padding:5px}.mini{font-size:13px;color:var(--muted)}.image-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:16px;align-items:start}.image-grid figure{margin:0}.image-grid img{width:100%;border:1px solid var(--line);border-radius:9px}.image-grid .photo{height:390px;object-fit:cover;object-position:center 45%}figcaption{font-size:13px;color:var(--muted);margin-top:7px}.table-wrap{overflow:auto}
+.state-panel{display:flex;align-items:center;gap:22px;background:var(--navy);color:white;border-radius:12px;padding:24px;margin:16px 0}.led{width:52px;height:52px;flex-shrink:0;border-radius:50%;background:#15803d;box-shadow:0 0 22px #15803d88}.state-panel h3{color:white;margin:0}.state-buttons{display:flex;gap:8px;flex-wrap:wrap}.state-buttons button{border:1px solid var(--line);border-radius:8px;padding:9px 13px;background:white;color:var(--navy);font:inherit;cursor:pointer}.state-buttons button[aria-pressed=true]{border:2px solid var(--teal);background:var(--teal-soft)}
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:20px}.pager .btn{margin:0}.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--teal);font-weight:700}.report-meta{display:flex;gap:10px;flex-wrap:wrap}.report-meta span{background:var(--teal-soft);padding:5px 10px;border-radius:7px;font-size:14px}.toc{display:flex;gap:10px;flex-wrap:wrap}.toc a{padding:6px 10px;background:var(--teal-soft);border-radius:7px;text-decoration:none}.muted{color:var(--muted)}.step .body p{margin:8px 0}.code-view{white-space:pre-wrap;background:var(--code-bg);color:var(--code-ink);padding:16px;border-radius:9px;font:13px/1.5 Consolas,monospace;overflow-wrap:anywhere}.section-anchor{scroll-margin-top:65px} .state-table td:first-child{font-weight:700}
+@media(max-width:700px){.flow-grid,.image-grid{grid-template-columns:1fr}.image-grid .photo{height:360px}.report-banner{padding:12px}.state-panel{padding:18px}.where{display:none}header{padding:22px 0}header h1{font-size:25px}}
+</style></head><body><header><div class="wrap"><div class="brand">ConectLab · CL-P02 · Raport de implementare</div><h1>Rezolvare aplicată în Călărași</h1><p>Growatt SPF 5000 ES: comandă locală, tratarea nulului, bypass AAR și date în Home Assistant.</p><div class="badges"><span class="badge">Ghiulaiu Florin Daniel</span><span class="badge">18 noiembrie 2026</span><span class="badge">v1.0</span></div><div class="hero-cta"><a href="index.html">← Înapoi la proiect</a><a href="https://github.com/conectlab-upb/Growatt/blob/main/ARTICOL.md">Studiul tehnic complet</a></div></div></header><main class="wrap"><div class="card"><h2>Raport de implementare și documentare</h2><p>Raportul descrie instalația realizată în Călărași de Ghiulaiu Florin Daniel, pe baza fotografiei, a configurației ESPHome citite și a precizărilor realizatorului. Nu reprezintă raport de recepție electrică sau proces-verbal de măsurători.</p><div class="report-meta"><span>Instalație reală</span><span>Control local</span><span>Telemetrie locală</span><span>Documentație publică</span></div><h3>Structura raportului</h3><div class="toc"><a href="#obiectiv">Obiectiv</a><a href="#implementare">Implementare</a><a href="#imagini">Fotografie și schemă</a><a href="#rezultate">Rezultate</a><a href="#validare">Validare</a></div></div>
+<div id="obiectiv" class="card section-anchor"><h2>1. Obiectivul implementării</h2><p>Integrarea unui Growatt utilizat ca UPS într-o arhitectură cu operare locală și supraveghere în Home Assistant. Funcțiile urmărite sunt comanda alimentării AC, conectarea consumatorilor, tratarea nulului în regim autonom și disponibilitatea unei căi de bypass.</p><p>Abordarea ConectLab separă calea de monitorizare cloud a stick-ului de calea de achiziție și comandă locală. Nu se pretinde că funcționarea electrică a invertorului ar depinde de cloud sau că stick-ul ar fi fost dezactivat.</p><div class="flow-grid" role="img" aria-label="Comparație: monitorizare prin cloud și integrare locală ConectLab"><div class="flow-panel"><h3>ÎNAINTE · monitorizare prin cloud</h3><div class="node">Growatt + stick de monitorizare</div><div class="flow-arrow">↓</div><div class="node cloud">Internet · platforma cloud Growatt</div><div class="flow-arrow">↓</div><div class="node">Aplicație / portal de monitorizare</div><p class="mini">Disponibilitatea monitorizării la distanță depinde de comunicație și de platformă. Invertorul își poate continua funcțiile locale.</p></div><div class="flow-panel local"><h3>DUPĂ · abordarea ConectLab</h3><div class="node">Growatt ↔ WaveShare + ESPHome</div><div class="flow-arrow">↕ LAN · API ESPHome</div><div class="node local">Home Assistant · date și istoric local</div><div class="flow-arrow">↕ logică executată pe controler</div><div class="node">Intrări DI · ieșiri DO · LED RGB</div><p class="mini">Calea locală nu folosește stick-ul sau cloud-ul pentru schimbul de date cu Home Assistant. Nu se afirmă că stick-ul a fost eliminat ori blocat.</p></div></div></div>
+<div id="implementare" class="card section-anchor"><h2>2. Configurația implementată</h2><table><tr><th>Element</th><th>Funcție documentată</th></tr><tr><td>WaveShare ESP32-S3-POE-ETH-8DI-8DO</td><td>Intrări, ieșiri, logică locală și achiziție de date.</td></tr><tr><td>ESPHome</td><td>Asocieri DI/DO, interblocare DO1/DO3, temporizare și LED.</td></tr><tr><td>Home Assistant</td><td>Entități, supraveghere, dashboard și istoric.</td></tr><tr><td>C1 · Schrack</td><td>Alimentarea AC Growatt; comandă DO1.</td></tr><tr><td>C2 · Schneider</td><td>Legătura N–PE; comandă DO3.</td></tr><tr><td>C3</td><td>Ieșirea Growatt către consumatori; comandă DO2.</td></tr><tr><td>C4</td><td>Bypass din aceeași ramură AC, înainte de C1.</td></tr></table><p>Realizatorul confirmă comutarea fazei și nulului prin C1/C3/C4, interblocajul mecanic și electric al perechii C3/C4 și poziționarea legăturii N–PE înaintea diferențialelor.</p><h3>Operare frontală și semnalizare</h3><p>Butonul frontal este conectat la DI2 și este utilizat pentru oprirea comandată a ieșirii Growatt. LED-ul RGB indică combinațiile DO1/DO2: verde ON/ON, albastru ON/OFF, galben OFF/ON și roșu OFF/OFF. Starea C4 nu este inclusă direct în codificarea RGB.</p><h3>Secvența locală identificată</h3><p>Fișierul analizat este <code class="k">gorwatt-cu-stari-si-automatizar.yaml</code>. DO1 și DO3 sunt interblocate software, cu așteptări configurate de 1 s și 2 s. Oprirea DO1 pornește o secvență de 2 s cu verificarea stării OFF înaintea cererii DO3 ON. Inițializarea include o așteptare de 3 s.</p><p>Aceste valori sunt parametri ai configurației, nu timpi măsurați ai contactorilor sau performanțe certificate ale transferului.</p></div>
+<div id="imagini" class="card section-anchor"><h2>3. Fotografie și schemă</h2><div class="image-grid"><figure><img class="photo" src="https://raw.githubusercontent.com/conectlab-upb/Growatt/main/tablou-growatt.png" alt="Tabloul real al instalației din Călărași, cu WaveShare și contactori" loading="lazy"><figcaption>Figura 1. Tabloul instalației din Călărași.</figcaption></figure><figure><a href="https://raw.githubusercontent.com/conectlab-upb/Growatt/main/schema-unifilara.svg" target="_blank" rel="noopener"><img src="https://raw.githubusercontent.com/conectlab-upb/Growatt/main/schema-unifilara.svg" alt="Schema unifilară: alimentare, cale Growatt, bypass și detaliu N–PE" loading="lazy"></a><figcaption>Figura 2. Schema unifilară funcțională, cu bypass în amonte de C1.</figcaption></figure></div></div>
+<div id="rezultate" class="card section-anchor"><h2>4. Rezultate și dovezi disponibile</h2><table><tr><th>Constatare</th><th>Dovadă</th><th>Nivel</th></tr><tr><td>Interblocare și temporizări</td><td>Citirea configurației ESPHome</td><td>Software</td></tr><tr><td>Buton frontal pe DI2</td><td>Confirmarea realizatorului și asocierea DI2/DO2 din cod</td><td>Configurație / declarație</td></tr><tr><td>LED RGB cu patru combinații</td><td>Logica locală examinată</td><td>Software</td></tr><tr><td>Telemetrie Growatt în Home Assistant</td><td>Entități și configurație descrise în studiu</td><td>Integrare</td></tr><tr><td>Topologia C1–C4 și N–PE</td><td>Fotografie și clarificări ale realizatorului</td><td>Funcțional, fără bornare completă</td></tr><tr><td>Firmware instalat identic cu fișierul citit</td><td>Nu este disponibilă o verificare de build</td><td>Neconfirmat</td></tr></table><p>Nu sunt prezentate valori electrice demonstrative ca rezultate măsurate ale instalației. Simulatorul de pe pagina proiectului ilustrează exclusiv combinațiile software.</p></div>
+<div id="validare" class="card section-anchor"><h2>5. Verificări necesare și limite</h2><p>Rapoartele instrumentate privind continuitatea PE, schema N/PE, declanșarea diferențialelor și transferul AAR nu au fost furnizate în acest studiu. Multimetrul poate oferi indicii privind tensiunile, fără să confirme singur eficacitatea protecției.</p><p>Funcționarea la lipsa Home Assistant depinde și de setările ESPHome, inclusiv de repornirile API. Defectarea controlerului poate afecta atât comenzile, cât și telemetria. Interblocajele hardware și protecțiile circuitelor de putere rămân funcții distincte.</p><div class="warn">Raportul documentează implementarea descrisă. Nu certifică instalația și nu substituie verificarea unei persoane competente.</div></div><div class="card"><h2>6. Materialele proiectului</h2><ul><li><a href="index.html#t2">Ghidul interactiv pe pași</a></li><li><a href="index.html#t5">Interpretarea măsurărilor și limitele multimetrului</a></li><li><a href="https://github.com/conectlab-upb/Growatt">Repository ConectLab · Growatt</a></li><li><a href="https://github.com/conectlab-upb/Growatt/blob/main/SURSE.md">Surse și atribuiri</a></li><li><a href="https://github.com/danyro6/Growatt">Repository-ul original al realizatorului</a></li></ul></div></main><footer><div class="wrap"><b>ConectLab · CL-P02 · v1.0</b> · Realizator: Ghiulaiu Florin Daniel · Călărași<br>© 2026 Ghiulaiu Florin Daniel, pentru contribuțiile originale protejabile. <a href="https://github.com/conectlab-upb/Growatt/blob/main/LICENSE">Drepturi și atribuiri</a> · <a href="https://conectlab-upb.github.io/#proiecte">Catalogul ConectLab</a><br>Pagina este documentară. Simulatorul și progresul funcționează în browser; nu există conexiune la echipamentele instalației. Imaginile sunt încărcate de pe GitHub.</div></footer><script></script></body></html>
