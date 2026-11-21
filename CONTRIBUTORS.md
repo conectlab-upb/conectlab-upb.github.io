@@ -9,7 +9,7 @@ Site-ul și materialele ConectLab EB104 sunt realizate de:
 
 | Contributor | Contribuție |
 |---|---|
-| Ghiulaiu Florin Daniel | ConectLab-02 Growatt UPS – ghidul interactiv (`ConectLab-02-Growatt-UPS/index.html`) și raportul de implementare de la Călărași (`ConectLab-02-Growatt-UPS/raport-implementare.html`) |
+| Ghiulaiu Florin Daniel (acord scris, email, 21.11.2026) | ConectLab-02 Growatt UPS – ghidul interactiv (`ConectLab-02-Growatt-UPS/index.html`) și raportul de implementare de la Călărași (`ConectLab-02-Growatt-UPS/raport-implementare.html`) |
 
 Contribuțiile rămân ale autorilor lor și sunt publicate cu acordul acestora sub licența
 [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/), ca parte a site-ului ConectLab EB104.
