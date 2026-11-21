@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "Dacă folosiți acest material, vă rugăm să îl citați astfel. / If you use this work, please cite it as below."
+title: "ConectLab EB104 – site-ul laboratorului (Conectăm echipamente. Conectăm oameni.)"
+type: software
+authors:
+  - family-names: Argatu
+    given-names: Florin-Ciprian
+    orcid: "https://orcid.org/0000-0003-0606-6273"
+    affiliation: "National University of Science and Technology POLITEHNICA Bucharest, Faculty of Electrical Engineering"
+  - family-names: Adochiei
+    given-names: Felix-Constantin
+    affiliation: "National University of Science and Technology POLITEHNICA Bucharest, Faculty of Electrical Engineering"
+repository-code: "https://github.com/conectlab-upb/conectlab-upb.github.io"
+url: "https://conectlab-upb.github.io/"
+license: CC-BY-NC-ND-4.0
+abstract: "Site-ul de prezentare al laboratorului ConectLab EB104 – Laboratorul de Sisteme Conectate, UPB: proiecte, module didactice și oameni."
+keywords:
+  - ConectLab
+  - IIoT
+  - IoMT
+  - laborator
