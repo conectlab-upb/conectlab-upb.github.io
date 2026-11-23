@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CONECTLAB_CE01_Protectie_Diferentiala_Masura_IoT_v1.0</title>
+<style>
+  :root {
+    --navy: #0b2f4a;
+    --teal: #00838f;
+    --teal-soft: #e0f4f4;
+    --amber: #d97706;
+    --amber-soft: #fff4e0;
+    --red: #b42318;
+    --red-soft: #fdecea;
+    --green: #15803d;
+    --green-soft: #e7f6ec;
+    --ink: #1c2733;
+    --muted: #5b6b7b;
+    --line: #d5dee7;
+    --bg: #f4f7fa;
+    --card: #ffffff;
+    --code-bg: #0f1d2b;
+    --code-ink: #d9f2f2;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  header {
+    background: linear-gradient(120deg, var(--navy), var(--teal));
+    color: #fff;
+    padding: 28px 20px 22px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  header .brand { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+  header h1 { margin: 6px 0 6px; font-size: 28px; line-height: 1.2; }
+  header p { margin: 0; opacity: .92; max-width: 760px; }
+  .badges { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 13px;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; gap: 4px; overflow-x: auto; }
+  nav button {
+    border: 0; background: none; padding: 13px 14px;
+    font: inherit; font-weight: 600; color: var(--muted);
+    border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap;
+  }
+  nav button.active { color: var(--teal); border-bottom-color: var(--teal); }
+  main { padding: 22px 0 40px; }
+  section.tab { display: none; }
+  section.tab.active { display: block; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  h2 { color: var(--navy); margin: 0 0 10px; font-size: 22px; }
+  h3 { color: var(--navy); margin: 18px 0 8px; font-size: 17px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .note, .warn, .danger, .ok {
+    border-radius: 10px; padding: 11px 14px; margin: 12px 0; font-size: 15px;
+  }
+  .note { background: var(--teal-soft); border-left: 4px solid var(--teal); }
+  .warn { background: var(--amber-soft); border-left: 4px solid var(--amber); }
+  .danger { background: var(--red-soft); border-left: 4px solid var(--red); }
+  .ok { background: var(--green-soft); border-left: 4px solid var(--green); }
+
+  /* progres */
+  .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--teal), var(--green)); transition: width .3s; }
+  .progress span { font-weight: 700; color: var(--navy); min-width: 70px; text-align: right; }
+
+  /* pași */
+  .step {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .step > summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+  }
+  .step > summary::-webkit-details-marker { display: none; }
+  .num {
+    flex: 0 0 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--navy); color: #fff; font-weight: 700;
+  }
+  .step.done .num { background: var(--green); }
+  .step .title { font-weight: 700; flex: 1; }
+  .step .where { font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line); padding: 2px 8px; border-radius: 99px; }
+  .step .body { padding: 0 18px 16px 62px; }
+  .step .body ol, .step .body ul { padding-left: 20px; }
+  .step .body li { margin: 4px 0; }
+  .check {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line);
+    font-weight: 600; color: var(--green);
+  }
+  .check input { width: 18px; height: 18px; accent-color: var(--green); }
+
+  /* cod */
+  .cmd { position: relative; margin: 8px 0 12px; }
+  .cmd pre {
+    margin: 0; background: var(--code-bg); color: var(--code-ink);
+    padding: 12px 70px 12px 14px; border-radius: 9px;
+    overflow-x: auto; font: 14px/1.45 Consolas, "Courier New", monospace;
+    white-space: pre;
+  }
+  .cmd .lbl { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .cmd button.copy {
+    position: absolute; right: 8px; bottom: 8px;
+    background: var(--teal); color: #fff; border: 0; border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer;
+  }
+  .cmd button.copy.copied { background: var(--green); }
+  code.k { background: var(--teal-soft); padding: 1px 6px; border-radius: 5px; font-size: 14px; }
+
+  /* configurator */
+  label { display: block; font-weight: 600; font-size: 14px; margin: 10px 0 4px; }
+  input[type=text], select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line);
+    border-radius: 8px; font: inherit; background: #fff;
+  }
+  .btn {
+    background: var(--teal); color: #fff; border: 0; border-radius: 8px;
+    padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer; margin: 12px 8px 0 0;
+  }
+  .btn.ghost { background: #fff; color: var(--teal); border: 1px solid var(--teal); }
+  [role=status] { font-size: 14px; color: var(--muted); min-height: 1.4em; margin-top: 8px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); color: var(--navy); }
+  table input { width: 100%; border: 0; font: inherit; padding: 2px; background: transparent; }
+
+  .path { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .path .card h3 { margin-top: 0; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+  .tag.go { background: var(--green-soft); color: var(--green); }
+  .tag.wait { background: var(--amber-soft); color: var(--amber); }
+
+  svg text { font-family: "Segoe UI", Roboto, Arial, sans-serif; }
+  footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; padding: 16px 0 30px; }
+
+  @media (max-width: 700px) {
+    .grid2, .path { grid-template-columns: 1fr; }
+    .step .body { padding-left: 18px; }
+    header h1 { font-size: 22px; }
+  }
+  @media print {
+    nav, .copy, .btn, .noprint { display: none !important; }
+    section.tab { display: block !important; }
+    details { display: block; }
+    details > .body { display: block !important; }
+    body { background: #fff; }
+    .card, .step { break-inside: avoid; }
+  }
+
+input[type=range]{accent-color:var(--teal)}
+</style><meta name="author" content="Florin-Ciprian Argatu, Felix-Constantin Adochiei"><meta name="copyright" content="© 2026 Florin-Ciprian Argatu, Felix-Constantin Adochiei – CC BY-NC-ND 4.0"><link rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/"></head><body>
+<header>
+  <div class="wrap">
+    <div class="brand">ConectLab EB104 · UPB · DMAECS · Modul comun CE01</div>
+    <h1>CE01 – Protecție diferențială, măsură și IoT local<br><small style="font-weight:400;font-size:19px">Releu inteligent Sinotimer SVP-688W, comandat local din Home Assistant</small></h1>
+    <p>Aplicația interactivă a lucrării de laborator. Conține teoria pe scurt, un simulator al ecranului aparatului, un decodor pentru datele brute pe care le trimite releul (DP), fișa de măsurători și sarcinile pe discipline, cu varianta N a fiecărui student.</p>
+    <div class="badges">
+      <span class="badge">Calitatea energiei</span><span class="badge">Aparate electrice / protecții</span><span class="badge">IoT</span><span class="badge">v1.0 · 18.11.2026</span>
+    </div>
+  </div>
+</header>
+
+<nav><div class="wrap">
+  <button data-t="t1" class="active">1 · Prezentare</button>
+  <button data-t="t2">2 · Teorie</button>
+  <button data-t="t3">3 · Simulator</button>
+  <button data-t="t4">4 · Decodor DP</button>
+  <button data-t="t5">5 · Local vs cloud</button>
+  <button data-t="t6">6 · Sarcini + varianta N</button>
+  <button data-t="t7">7 · Fișa de rezultate</button>
+  <button data-t="t8">8 · Surse</button>
+</div></nav>
+
+<main><div class="wrap">
+
+<!-- ============ 1 PREZENTARE ============ -->
+<section class="tab active" id="t1">
+  <div class="card">
+    <h2>Scopul lucrării</h2>
+    <p>Un singur aparat de pe șina DIN reunește trei lucruri: <b>protecția</b> la curent diferențial (curent de scurgere), <b>măsurarea</b> mărimilor electrice (tensiune, curent, putere, energie) și <b>comunicația</b> Wi-Fi. În laborator, releul este citit și comandat <b>local</b>, direct din Home Assistant, fără cloudul producătorului.</p>
+    <div class="grid2">
+      <div>
+        <h3>La final, studentul știe să:</h3>
+        <ul>
+          <li>explice cum detectează un dispozitiv diferențial curentul de scurgere;</li>
+          <li>calculeze S, P și factorul de putere din valorile afișate;</li>
+          <li>decodeze pachetul brut DP 6 (<code class="k">phase_a</code>) în V, A și kW;</li>
+          <li>compare comanda locală cu cea prin cloud: timp de răspuns și ce se întâmplă fără internet;</li>
+          <li>verifice dacă tensiunea măsurată se încadrează în limitele de calitate a energiei.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Echipament (tabloul CL-P01)</h3>
+        <table>
+          <tr><th>Aparat</th><td>Sinotimer SVP-688W, categoria Tuya <code class="k">dlq</code></td></tr>
+          <tr><th>Rețea</th><td>Wi-Fi 2,4 GHz, LAN EB104, port TCP 6668, protocol Tuya 3.5</td></tr>
+          <tr><th>Software</th><td>Home Assistant 2026.5 + LocalTuya (xZetsubou) + dashboard local</td></tr>
+          <tr><th>Sarcină</th><td>bec / rezistor de putere / consumator inductiv, montate de cadrul didactic</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="danger"><b>Protecția muncii (L01).</b> Studenții nu lucrează sub tensiune și nu creează defecte reale la pământ. Montajul și butonul TEST al releului le acționează doar cadrul didactic. Curentul de scurgere se studiază în simulator (tab 3) și în calcule.</div>
+  </div>
+
+  <div class="card">
+    <h2>Schema de principiu</h2>
+    <div id="schemaDev"></div>
+  </div>
+</section>
+
+<!-- ============ 2 TEORIE ============ -->
+<section class="tab" id="t2">
+  <div class="card">
+    <h2>2.1 Principiul protecției diferențiale</h2>
+    <div class="grid2">
+      <div>
+        <p>Conductoarele L și N trec împreună printr-un tor (transformator de curent diferențial), fără contact electric cu el. În funcționare normală, curenții din L și N sunt egali și de sens opus, iar fluxurile lor se anulează.</p>
+        <p>Dacă o parte din curent se întoarce pe altă cale (prin pământ sau prin corpul unei persoane), apare un dezechilibru <b>ΔI = I<sub>L</sub> − I<sub>N</sub></b>. Acesta produce flux în tor, iar peste prag declanșatorul deschide contactele.</p>
+        <p>Butonul TEST creează intenționat un dezechilibru, ca să se verifice că aparatul declanșează.</p>
+        <p class="note">De reținut: dispozitivul diferențial nu „vede” pământul. Compară doar curentul care pleacă cu cel care se întoarce. De aceea funcționează și în circuite fără conductor de protecție.</p>
+      </div>
+      <div>
+        <svg viewBox="0 0 420 300" width="100%" role="img" aria-label="Tor diferențial cu L și N">
+          <ellipse cx="210" cy="150" rx="70" ry="110" fill="none" stroke="#d97706" stroke-width="22" opacity=".85"/>
+          <line x1="20" y1="120" x2="400" y2="120" stroke="#b42318" stroke-width="6"/>
+          <line x1="400" y1="180" x2="20" y2="180" stroke="#1d4ed8" stroke-width="6"/>
+          <text x="40" y="108" fill="#b42318" font-weight="700">I_L →</text>
+          <text x="330" y="205" fill="#1d4ed8" font-weight="700">← I_N</text>
+          <path d="M210 260 V290 H330" stroke="#0b2f4a" stroke-width="2" fill="none"/>
+          <rect x="300" y="268" width="110" height="28" rx="6" fill="#0b2f4a"/><text x="355" y="287" text-anchor="middle" fill="#fff" font-size="13">declanșator</text>
+          <text x="210" y="30" text-anchor="middle" font-weight="700" fill="#0b2f4a">Φ ∝ I_L − I_N = ΔI</text>
+        </svg>
+      </div>
+    </div>
+    <h3>Valori uzuale ale curentului diferențial nominal IΔn</h3>
+    <table>
+      <tr><th>IΔn</th><th>Rol</th></tr>
+      <tr><td>10 mA / 30 mA</td><td>Sensibilitate mare, protecția persoanelor. 30 mA este valoarea cea mai des întâlnită în locuințe.</td></tr>
+      <tr><td>100 mA / 300 mA</td><td>Sensibilitate medie, în principal protecție împotriva incendiului.</td></tr>
+    </table>
+    <h3>Tipuri după forma curentului detectat (IEC 60755)</h3>
+    <table>
+      <tr><th>Tip</th><th>Declanșează la</th></tr>
+      <tr><td>AC</td><td>curent diferențial alternativ sinusoidal</td></tr>
+      <tr><td>A</td><td>ca AC + curent continuu pulsatoriu</td></tr>
+      <tr><td>F</td><td>ca A + curenți compuși și c.c. pulsatoriu suprapus peste c.c. neted</td></tr>
+      <tr><td>B</td><td>ca F + c.a. până la 1 kHz și c.c. neted de orice polaritate</td></tr>
+    </table>
+    <p class="warn">Tipul diferențialului din releul Sinotimer nu apare în datele obținute din aplicația Tuya. Studentul îl caută pe eticheta aparatului și îl trece în fișă.</p>
+  </div>
+
+  <div class="card">
+    <h2>2.2 Puteri și factor de putere</h2>
+    <p>Releul raportează tensiunea V, curentul I și puterea activă P. Din ele se calculează:</p>
+    <div class="grid2">
+      <div>
+        <table>
+          <tr><th>Mărime</th><th>Relație</th><th>Unitate</th></tr>
+          <tr><td>Putere aparentă</td><td>S = V · I</td><td>VA</td></tr>
+          <tr><td>Putere activă</td><td>P (măsurată)</td><td>W</td></tr>
+          <tr><td>Factor de putere</td><td>λ = P / S</td><td>–</td></tr>
+          <tr><td>Putere reactivă*</td><td>Q = √(S² − P²)</td><td>var</td></tr>
+        </table>
+        <p style="font-size:13px;color:#5b6b7b">* Relația pentru Q este valabilă doar pentru mărimi sinusoidale. La sarcini neliniare (surse în comutație, LED-uri), diferența dintre S și P include și distorsiunea.</p>
+      </div>
+      <svg viewBox="0 0 320 210" width="100%" role="img" aria-label="Triunghiul puterilor">
+        <path d="M30 180 H270 V40 Z" fill="#e0f4f4" stroke="#00838f" stroke-width="3"/>
+        <text x="150" y="200" text-anchor="middle" font-weight="700">P [W]</text>
+        <text x="285" y="115" font-weight="700">Q</text>
+        <text x="130" y="98" text-anchor="middle" font-weight="700" transform="rotate(-30 130 98)">S [VA]</text>
+        <text x="72" y="172" fill="#d97706">φ</text>
+        <text x="160" y="25" text-anchor="middle" fill="#5b6b7b" font-size="13">λ = cos φ = P/S</text>
+      </svg>
+    </div>
+    <p class="warn"><b>Atenție la rezoluție.</b> Releul transmite P cu pasul 0,0001 kW = 0,1 W și I cu pasul 0,001 A. La sarcini mici (de exemplu 21 mA, sub 5 VA), λ calculat are o eroare relativă mare. Discutați acest lucru la concluzii.</p>
+  </div>
+
+  <div class="card">
+    <h2>2.3 Calitatea tensiunii (EN 50160, pe scurt)</h2>
+    <p>Pentru variațiile lente de tensiune, standardul folosește valorile efective mediate pe 10 minute, observate o săptămână. Cel puțin 95 % dintre aceste valori trebuie să fie în <b>U<sub>n</sub> ± 10 %</b>, adică 207–253 V la U<sub>n</sub> = 230 V.</p>
+    <p class="note">În laborator înregistrăm o oră, nu o săptămână. Tabelul de la tab 7 calculează procentul de valori din bandă, ca exercițiu de metodă, nu ca evaluare de conformitate.</p>
+  </div>
+
+  <div class="card">
+    <h2>2.4 Modelul de date Tuya (DP)</h2>
+    <p>Aparatul Tuya își expune mărimile ca „data points” (DP): un număr, un cod și un tip. Lista modelului se citește din Tuya IoT Platform, la Standard Instruction Set / Status Set. Pentru releul din laborator:</p>
+    <table>
+      <tr><th>DP</th><th>Cod</th><th>Tip</th><th>Semnificație / scară</th></tr>
+      <tr><td>1</td><td>total_forward_energy</td><td>value</td><td>energie activă, ×0,01 kWh</td></tr>
+      <tr><td>6</td><td>phase_a</td><td>raw (8 octeți)</td><td>V (2 o., ×0,1) · I (3 o., ×0,001 A) · P (3 o., ×0,0001 kW)</td></tr>
+      <tr><td>9</td><td>fault</td><td>bitmap</td><td>alarme (scurtcircuit, supratensiune, suprasarcină, scurgere …)</td></tr>
+      <tr><td>15</td><td>leakage_current</td><td>value</td><td>curent de scurgere, mA</td></tr>
+      <tr><td>16</td><td>switch</td><td>bool</td><td>starea releului (pornit / oprit)</td></tr>
+      <tr><td>17 / 18</td><td>alarm_set</td><td>raw</td><td>praguri de alarmă</td></tr>
+      <tr><td>47</td><td>temp_value</td><td>value</td><td>temperatura internă</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 3 SIMULATOR ============ -->
+<section class="tab" id="t3">
+  <div class="card">
+    <h2>Simulator Sinotimer</h2>
+    <p>Se reglează sarcina și curentul de scurgere. Simulatorul arată ce afișează releul, ce pachet DP 6 ar trimite și dacă diferențialul declanșează. Se lucrează fără niciun risc.</p>
+    <div class="grid2">
+      <div>
+        <label>Tensiune rețea V: <span id="sVv"></span> V</label><input type="range" id="sV" min="190" max="260" step="0.1" value="230" style="width:100%">
+        <label>Curent sarcină I: <span id="sIv"></span> A</label><input type="range" id="sI" min="0" max="16" step="0.001" value="0.435" style="width:100%">
+        <label>Factor de putere λ: <span id="sPFv"></span></label><input type="range" id="sPF" min="0.2" max="1" step="0.01" value="1" style="width:100%">
+        <label>Curent de scurgere ΔI: <span id="sLv"></span> mA</label><input type="range" id="sL" min="0" max="60" step="0.5" value="0" style="width:100%">
+        <label>Prag IΔn</label>
+        <select id="sTh"><option value="10">10 mA</option><option value="30" selected>30 mA</option><option value="100">100 mA</option></select>
+        <button class="btn" id="sTest">Buton TEST</button><button class="btn ghost" id="sReset">Reanclanșare</button>
+        <div role="status" id="sMsg"></div>
+      </div>
+      <div>
+        <div id="simDev" style="max-width:340px;margin:0 auto"></div>
+        <p style="font-size:12px;color:#5b6b7b;text-align:center;margin:0">Butonul roșu de pe aparat se poate apăsa (pornit / oprit). Contorul de energie rulează accelerat (×60).</p>
+      </div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3 style="margin-top:0">Mărimi calculate</h3>
+      <table id="sCalc"></table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Ce ar trimite releul (LocalTuya)</h3>
+      <div class="cmd"><div class="lbl">DP 6 · phase_a (base64)</div><pre id="sRaw"></pre></div>
+      <div class="cmd"><div class="lbl">Octeți (hex)</div><pre id="sHex"></pre></div>
+      <div class="cmd"><div class="lbl">DP 9 · fault (bitmap)</div><pre id="sFault"></pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 DECODOR ============ -->
+<section class="tab" id="t4">
+  <div class="card">
+    <h2>Decodorul pachetului DP 6 (phase_a)</h2>
+    <p>Valoarea brută se copiază din Home Assistant: atributul entității DP 6 sau jurnalul LocalTuya. Decodorul o desface octet cu octet.</p>
+    <label for="dIn">Valoare base64</label>
+    <input type="text" id="dIn" value="CMoAABUAAAA=">
+    <button class="btn" id="dGo">Decodează</button><button class="btn ghost" id="dEx">Exemplu din laborator (17.11.2026)</button>
+    <div role="status" id="dMsg"></div>
+    <table id="dTab"></table>
+    <div class="note"><b>Metoda.</b> Base64 → 8 octeți. Octeții se citesc big-endian (cel mai semnificativ primul):
+      V = (o0·256 + o1) × 0,1 · I = (o2·65536 + o3·256 + o4) × 0,001 · P = (o5·65536 + o6·256 + o7) × 0,0001 kW.</div>
+  </div>
+  <div class="card">
+    <h2>Codorul invers</h2>
+    <p>Calcul invers: din V, I și P se obține pachetul. Rezultatul se verifică cu decodorul de mai sus.</p>
+    <div class="grid2">
+      <div><label>V [V]</label><input type="text" id="eV" value="231.4"><label>I [A]</label><input type="text" id="eI" value="0.512"><label>P [kW]</label><input type="text" id="eP" value="0.1150"></div>
+      <div><button class="btn" id="eGo">Codează</button><div class="cmd"><div class="lbl">Rezultat</div><pre id="eOut"></pre></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 LOCAL VS CLOUD ============ -->
+<section class="tab" id="t5">
+  <div class="card">
+    <h2>Două drumuri pentru aceeași comandă</h2>
+    <svg viewBox="0 0 960 300" width="100%" role="img" aria-label="Drum local și drum prin cloud">
+<defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5b6b7b"/></marker></defs>
+<rect x="20" y="130" width="170" height="60" rx="10" fill="#0b2f4a"/><text x="105" y="166" text-anchor="middle" fill="#fff" font-weight="700">Home Assistant</text>
+<svg x="800" y="40" width="130" height="231" viewBox="460 95 400 710" role="img" aria-label="Releul Sinotimer SVP-688W"><defs><linearGradient id='lcstbd'><stop offset='0' stop-color='#d9dde2'/><stop offset='.5' stop-color='#f4f6f8'/><stop offset='1' stop-color='#cfd4da'/></linearGradient><linearGradient id='lcstfc' x2='0' y2='1'><stop offset='0' stop-color='#e9ecef'/><stop offset='1' stop-color='#d6dade'/></linearGradient><radialGradient id='lcstsc'><stop offset='0' stop-color='#e8e8e8'/><stop offset='.7' stop-color='#9aa0a6'/><stop offset='1' stop-color='#5f656b'/></radialGradient><filter id='lcstsh' x='-20%' y='-10%' width='140%' height='130%'><feDropShadow dy='10' stdDeviation='12' flood-opacity='.65'/></filter></defs><g filter='url(#lcstsh)'><rect x='490' y='105' width='340' height='105' rx='6' fill='url(#lcstbd)'/><rect x='470' y='200' width='380' height='470' rx='10' fill='url(#lcstbd)' stroke='#b9c0c7'/><rect x='490' y='660' width='340' height='135' rx='6' fill='url(#lcstbd)'/></g><circle cx='565' cy='155' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='565' cy='155' r='19' fill='url(#lcstsc)'/><path d='M554 155H576M565 144V166' stroke='#555' stroke-width='3'/><circle cx='755' cy='155' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='755' cy='155' r='19' fill='url(#lcstsc)'/><path d='M744 155H766M755 144V166' stroke='#555' stroke-width='3'/><circle cx='565' cy='740' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='565' cy='740' r='19' fill='url(#lcstsc)'/><path d='M554 740H576M565 729V751' stroke='#555' stroke-width='3'/><circle cx='755' cy='740' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='755' cy='740' r='19' fill='url(#lcstsc)'/><path d='M744 740H766M755 729V751' stroke='#555' stroke-width='3'/><rect x='632' y='137' width='56' height='36' rx='4' fill='#eef0f2' stroke='#cdd2d7'/><rect x='626' y='722' width='68' height='36' rx='4' fill='#eef0f2' stroke='#cdd2d7'/><text x='660' y='164' font-family='Arial' font-size='22' fill='#9aa1a8' text-anchor='middle'>IN</text><text x='660' y='749' font-family='Arial' font-size='22' fill='#9aa1a8' text-anchor='middle'>OUT</text><text x='565' y='698' font-family='Arial' font-size='20' fill='#9aa1a8' text-anchor='middle'>N</text><text x='755' y='698' font-family='Arial' font-size='20' fill='#9aa1a8' text-anchor='middle'>L</text><rect x='482' y='215' width='356' height='430' rx='8' fill='url(#lcstfc)' stroke='#c3c9cf'/><text x='500' y='253' font-family='Arial' font-size='21' fill='#d6231f' font-weight='900'>SINOTIMER</text><text x='630' y='252' font-family='Arial' font-size='13' fill='#5a636c' >WiFi-Smart Meter&amp;Energy Protector</text><text transform='translate(492,337) rotate(90)' font-family='Arial' font-weight='700' font-size='13' fill='#3d454d'>SVP-688W</text><text x='486' y='490' font-family='Arial' font-size='15' fill='#3d454d' font-weight='700'>CE</text><rect x='506' y='299' width='308' height='192' rx='6' fill='#8b9198'/><rect x='512' y='305' width='296' height='180' rx='3' fill='#050608'/><g transform='translate(524,357) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='46' fill='#2a1010' letter-spacing='2'>8888</text></g><g transform='translate(672,357) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='50' fill='#2a1010' letter-spacing='2'>888</text></g><g transform='translate(534,415) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='44' fill='#121a36' letter-spacing='2'>888</text></g><g transform='translate(672,415) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='40' fill='#0f240f' letter-spacing='2'>888</text></g><g transform='translate(524,468) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='44' fill='#0f240f' letter-spacing='2'>888</text></g><g transform='translate(672,468) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='44' fill='#0f240f' letter-spacing='2'>888</text></g><text x='774' y='377' font-family='Arial' font-size='14' fill='#ff3b30' font-weight='700'>KW/h</text><text x='642' y='415' font-family='Arial' font-size='14' fill='#6f8cff' >V</text><text x='642' y='470' font-family='Arial' font-size='14' fill='#5fdc5f' >A</text><text x='774' y='417' font-family='Arial' font-size='14' fill='#5fdc5f' >mA</text><rect x='818' y='375' width='18' height='44' rx='3' fill='none' stroke='#7a828a'/><text x='522' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>PULSE</text><circle cx='522' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='590' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>WIFI</text><circle cx='590' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='658' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>V</text><circle cx='658' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='726' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>A</text><circle cx='726' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='794' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>LEAKAGE</text><circle cx='794' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><rect x='508' y='575' width='62' height='54' rx='8' fill='#f2f3f5' stroke='#c6ccd2'/><rect x='584' y='575' width='62' height='54' rx='8' fill='#f2f3f5' stroke='#c6ccd2'/><rect x='660' y='575' width='62' height='54' rx='8' fill='#f2f3f5' stroke='#c6ccd2'/><text x='539' y='610' font-family='Arial' font-size='17' fill='#2c5bd6' text-anchor='middle' font-weight='900'>SET</text><path d='M615 589l13 22h-26z' fill='#1e9aa6'/><text x='691' y='598' font-family='Arial' font-size='14' fill='#2c5bd6' text-anchor='middle' font-weight='900'>WIFI</text><path d='M691 621l-11-14h22z' fill='#1e9aa6'/><rect x='736' y='575' width='62' height='54' rx='8' fill='#e5302b' stroke='#b81f1b'/><path d='M758 593a14 14 0 1 0 20 0M768 587V603' fill='none' stroke='#fff' stroke-width='4' stroke-linecap='round'/>
+ 
+ <g transform="translate(724,341) skewX(-6)"><text id="lckwh" text-anchor="middle" dominant-baseline="central" font-family="Consolas,'Courier New',monospace" font-weight="700" font-size="46" fill="#ff3b30" letter-spacing="2" style="filter:drop-shadow(0 0 5px #ff3b30)">0.0</text></g><g transform="translate(582,401) skewX(-6)"><text id="lcv" text-anchor="middle" dominant-baseline="central" font-family="Consolas,'Courier New',monospace" font-weight="700" font-size="42" fill="#6f8cff" letter-spacing="2" style="filter:drop-shadow(0 0 5px #6f8cff)">225</text></g><g transform="translate(724,401) skewX(-6)"><text id="lcma" text-anchor="middle" dominant-baseline="central" font-family="Consolas,'Courier New',monospace" font-weight="700" font-size="40" fill="#5fdc5f" letter-spacing="2" style="filter:drop-shadow(0 0 5px #5fdc5f)">0</text></g><g transform="translate(578,454) skewX(-6)"><text id="lca" text-anchor="middle" dominant-baseline="central" font-family="Consolas,'Courier New',monospace" font-weight="700" font-size="40" fill="#5fdc5f" letter-spacing="2" style="filter:drop-shadow(0 0 5px #5fdc5f)">0.02</text></g><g transform="translate(724,453) skewX(-6)"><text id="lcst" text-anchor="middle" dominant-baseline="central" font-family="Consolas,'Courier New',monospace" font-weight="700" font-size="40" fill="#5fdc5f" letter-spacing="2" style="filter:drop-shadow(0 0 5px #5fdc5f)"> ON</text></g>
+ <circle style="filter:drop-shadow(0 0 6px #ff3b30)" id="lcled0" cx="522" cy="553" r="8" fill="#ff3b30"/><circle style="filter:drop-shadow(0 0 6px #ff3b30)" id="lcled1" cx="590" cy="553" r="8" fill="#ff3b30"/><circle style="filter:drop-shadow(0 0 6px #ff3b30)" id="lcled2" cx="658" cy="553" r="8" fill="#ff3b30"/><circle style="filter:drop-shadow(0 0 6px #4c7dff)" id="lcled3" cx="726" cy="553" r="8" fill="#4c7dff"/><circle id="lcled4" cx="794" cy="553" r="8" fill="#9aa1a8"/><rect id="lcpw" x="736" y="575" width="62" height="54" rx="8" fill="none" stroke="#ff5a3c" stroke-width="3" style="filter:drop-shadow(0 0 8px rgba(255,80,60,.9))"/><rect id="lcbtn" x="736" y="575" width="62" height="54" fill="transparent" style="cursor:pointer"/></svg>
+<text x="865" y="290" text-anchor="middle" font-size="13" fill="#5b6b7b">Releu Sinotimer SVP-688W</text>
+<path d="M190 160 H795" stroke="#15803d" stroke-width="4" marker-end="url(#a2)"/>
+<text x="490" y="150" text-anchor="middle" fill="#15803d" font-weight="700">LOCAL · LAN · TCP 6668 · criptat (protocol 3.5)</text>
+<path d="M105 130 V45 H420" stroke="#d97706" stroke-width="3" stroke-dasharray="7 5" fill="none" marker-end="url(#a2)"/>
+<rect x="420" y="20" width="130" height="50" rx="25" fill="#fff4e0" stroke="#d97706"/><text x="485" y="50" text-anchor="middle" font-weight="700" fill="#d97706">Tuya Cloud</text>
+<path d="M550 45 H760 V95 H795" stroke="#d97706" stroke-width="3" stroke-dasharray="7 5" fill="none" marker-end="url(#a2)"/>
+<text x="655" y="35" text-anchor="middle" fill="#d97706" font-size="13">CLOUD · internet · server EU</text>
+<rect x="300" y="215" width="330" height="55" rx="10" fill="#fdecea" stroke="#b42318"/>
+<text x="465" y="238" text-anchor="middle" fill="#b42318" font-weight="700">Fără internet:</text>
+<text x="465" y="258" text-anchor="middle" fill="#b42318" font-size="13">drumul local merge, drumul prin cloud cade</text></svg>
+    <table>
+      <tr><th></th><th>Integrarea Tuya (cloud)</th><th>LocalTuya (local)</th></tr>
+      <tr><td>Drumul datelor</td><td>HA → internet → Tuya → releu</td><td>HA → LAN → releu</td></tr>
+      <tr><td>Fără internet</td><td>nu funcționează</td><td>funcționează</td></tr>
+      <tr><td>Cheie necesară</td><td>cont Tuya</td><td>local_key (obținută o singură dată din proiectul Tuya)</td></tr>
+      <tr><td>Actualizare valori</td><td>la intervalul cloudului</td><td>la scan interval (15 s în laborator) + mesaje spontane</td></tr>
+    </table>
+    <p class="warn"><b>Cheia locală (local_key) este secretă.</b> Nu apare în referat, în capturi sau pe GitHub. Dacă aparatul este reasociat în aplicație, cheia se schimbă și trebuie citită din nou.</p>
+  </div>
+  <div class="card">
+    <h2>Cronometru de răspuns</h2>
+    <p>Cadrul didactic comandă releul din dashboard. Studentul pornește cronometrul la apăsare și îl oprește la clicul releului sau la schimbarea LED-ului. Se fac 5 măsurători pe fiecare drum.</p>
+    <button class="btn" id="cStart">Start</button><button class="btn ghost" id="cStop">Stop</button>
+    <select id="cPath" style="width:auto;display:inline-block;margin-left:8px"><option>local</option><option>cloud</option></select>
+    <div role="status" id="cMsg"></div>
+    <table id="cTab"><tr><th>#</th><th>Drum</th><th>t [ms]</th></tr></table>
+    <div id="cStat"></div>
+  </div>
+</section>
+
+<!-- ============ 6 SARCINI ============ -->
+<section class="tab" id="t6">
+  <div class="card">
+    <h2>Varianta N</h2>
+    <p>N este numărul studentului în lista grupei. Valorile de mai jos se calculează din N, deci fiecare student are alt set de date.</p>
+    <label for="vN">N (numărul din lista grupei)</label>
+    <input type="text" id="vN" value="1" style="max-width:120px">
+    <button class="btn" id="vGo">Generează varianta</button>
+    <table id="vTab"></table>
+  </div>
+  <div class="card">
+    <h2>Sarcini pe discipline</h2>
+    <p>Pașii comuni (A) se fac la toate disciplinele. Cadrul didactic alege apoi blocul disciplinei: B, C sau D.</p>
+    <details class="step" open><summary><span class="num">A</span><span class="title">Comun – citire și calcul</span><span class="where">toți</span></summary><div class="body">
+      <ol>
+        <li>Notați datele de pe eticheta releului: In, IΔn, tipul diferențialului, tensiunea nominală.</li>
+        <li>Pentru fiecare sarcină pornită de cadrul didactic, citiți V, I, P din dashboard și pachetul DP 6. Decodați pachetul (tab 4) și comparați cu dashboardul.</li>
+        <li>Calculați S, λ și Q, apoi completați tab 7.</li>
+      </ol></div></details>
+    <details class="step"><summary><span class="num">B</span><span class="title">Calitatea energiei</span><span class="where">CE</span></summary><div class="body">
+      <ol>
+        <li>Exportați istoricul tensiunii pe 60 de minute din HA (Istoric → descărcare CSV) și lipiți valorile în tabelul de la tab 7.</li>
+        <li>Calculați media, minimul, maximul și procentul de valori din banda 230 V ± 10 %.</li>
+        <li>Comparați λ pentru sarcina rezistivă și pentru cea inductivă. Explicați diferența.</li>
+        <li>Estimați eroarea relativă a lui λ dată de rezoluția lui P (0,1 W) și I (1 mA) la sarcina cea mai mică (varianta N).</li>
+      </ol></div></details>
+    <details class="step"><summary><span class="num">C</span><span class="title">Aparate electrice / protecții</span><span class="where">AE</span></summary><div class="body">
+      <ol>
+        <li>Pentru curentul de scurgere ΔI din varianta N, calculați rezistența căii de defect R<sub>f</sub> = V / ΔI și spuneți dacă releul declanșează la IΔn = 30 mA.</li>
+        <li>Verificați în simulator (tab 3), apoi urmăriți demonstrația butonului TEST făcută de cadrul didactic. Notați ce DP-uri se schimbă în HA (16 switch, 9 fault).</li>
+        <li>Explicați de ce un diferențial de tip AC poate să nu declanșeze la un curent de defect continuu neted.</li>
+      </ol></div></details>
+    <details class="step"><summary><span class="num">D</span><span class="title">IoT</span><span class="where">IoT</span></summary><div class="body">
+      <ol>
+        <li>Identificați în HA entitățile LocalTuya și DP-ul fiecăreia. Completați tabelul DP din fișă.</li>
+        <li>Codați manual (tab 4) valorile din varianta N și verificați cu decodorul.</li>
+        <li>Măsurați timpul de răspuns local și prin cloud (tab 5, câte 5 măsurători). Calculați media și abaterea.</li>
+        <li>Observați demonstrația fără internet făcută de cadrul didactic (cablul WAN al routerului scos): ce entități rămân disponibile?</li>
+      </ol></div></details>
+  </div>
+</section>
+
+<!-- ============ 7 FIȘA ============ -->
+<section class="tab" id="t7">
+  <div class="card">
+    <h2>Fișa de rezultate</h2>
+    <label for="fName">Nume, grupă, N</label><input type="text" id="fName" placeholder="ex. Popescu Ion, 141ID, N = 7">
+    <h3>Măsurători pe sarcini</h3>
+    <table id="fTab"><tr><th>Sarcina</th><th>V [V]</th><th>I [A]</th><th>P [kW]</th><th>S [VA]</th><th>λ</th><th>Q [var]</th></tr></table>
+    <button class="btn ghost" id="fAdd">+ rând</button>
+    <h3>Tensiune pe 60 min (lipiți valorile, câte una pe linie sau separate prin virgulă)</h3>
+    <textarea id="fU" rows="5" style="width:100%;font:14px Consolas,monospace;border:1px solid #d5dee7;border-radius:8px;padding:8px"></textarea>
+    <button class="btn" id="fUGo">Analizează</button>
+    <div id="fUOut"></div>
+    <h3>Concluzii</h3>
+    <textarea id="fC" rows="5" style="width:100%;font:inherit;border:1px solid #d5dee7;border-radius:8px;padding:8px"></textarea>
+    <button class="btn" onclick="window.print()">Tipărește / salvează PDF</button>
+    <p style="font-size:13px;color:#5b6b7b">Datele rămân doar în browser. Pentru predare, tipăriți fișa ca PDF și încărcați-o pe Moodle.</p>
+  </div>
+</section>
+
+<!-- ============ 8 SURSE ============ -->
+<section class="tab" id="t8">
+  <div class="card">
+    <h2>Surse</h2>
+    <ul>
+      <li>Residual-current device – Wikipedia (principiu, IΔn, tipuri AC/A/F/B): <a href="https://en.wikipedia.org/wiki/Residual-current_device">en.wikipedia.org/wiki/Residual-current_device</a></li>
+      <li>All About Circuits, Basic Electricity – Safety and grounding (GFCI, măsurarea diferențială a curentului): <a href="https://www.allaboutcircuits.com/worksheets/safety-grounding/4/">allaboutcircuits.com/worksheets/safety-grounding/4</a></li>
+      <li>All About Circuits, Lessons in Electric Circuits Vol. II, cap. 11 Power Factor: <a href="https://www.allaboutcircuits.com/textbook/alternating-current/chpt-11/true-reactive-and-apparent-power/">True, Reactive and Apparent Power</a></li>
+      <li>Schneider Electric, notă tehnică EN 50160 – Supply voltage variations: <a href="https://www.productinfo.schneider-electric.com/pm8000/59834d6446e0fb0001420311/Technical%20note/BM_TechnicalNoteEN50160_0000153756.ditamap/$/C_PQ_EN50160SupplyVoltageVariations_0000153762">productinfo.schneider-electric.com</a></li>
+      <li>Elektroda – Extracting DpIDs for Tuya MCU devices: <a href="https://www.elektroda.com/news/news4021129.html">elektroda.com/news/news4021129.html</a></li>
+      <li>LocalTuya (xZetsubou), integrare Home Assistant: <a href="https://github.com/xZetsubou/hass-localtuya">github.com/xZetsubou/hass-localtuya</a></li>
+      <li>ConectLab CL-P01 – Raport de implementare Sinotimer local (măsurători proprii, 17.11.2026)</li>
+    </ul>
+  </div>
+</section>
+
+</div></main>
+<footer><div class="wrap">ConectLab EB104 · UPB · Facultatea de Inginerie Electrică · DMAECS · Conf. dr. ing. Florin Argatu · CONECTLAB_CE01_Protectie_Diferentiala_Masura_IoT_v1.0</div></footer>
+
+<script>
+const SINO_STATIC=`<defs><linearGradient id='stbd'><stop offset='0' stop-color='#d9dde2'/><stop offset='.5' stop-color='#f4f6f8'/><stop offset='1' stop-color='#cfd4da'/></linearGradient><linearGradient id='stfc' x2='0' y2='1'><stop offset='0' stop-color='#e9ecef'/><stop offset='1' stop-color='#d6dade'/></linearGradient><radialGradient id='stsc'><stop offset='0' stop-color='#e8e8e8'/><stop offset='.7' stop-color='#9aa0a6'/><stop offset='1' stop-color='#5f656b'/></radialGradient><filter id='stsh' x='-20%' y='-10%' width='140%' height='130%'><feDropShadow dy='10' stdDeviation='12' flood-opacity='.65'/></filter></defs><g filter='url(#stsh)'><rect x='490' y='105' width='340' height='105' rx='6' fill='url(#stbd)'/><rect x='470' y='200' width='380' height='470' rx='10' fill='url(#stbd)' stroke='#b9c0c7'/><rect x='490' y='660' width='340' height='135' rx='6' fill='url(#stbd)'/></g><circle cx='565' cy='155' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='565' cy='155' r='19' fill='url(#stsc)'/><path d='M554 155H576M565 144V166' stroke='#555' stroke-width='3'/><circle cx='755' cy='155' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='755' cy='155' r='19' fill='url(#stsc)'/><path d='M744 155H766M755 144V166' stroke='#555' stroke-width='3'/><circle cx='565' cy='740' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='565' cy='740' r='19' fill='url(#stsc)'/><path d='M554 740H576M565 729V751' stroke='#555' stroke-width='3'/><circle cx='755' cy='740' r='26' fill='#fff' stroke='#c9ced3'/><circle cx='755' cy='740' r='19' fill='url(#stsc)'/><path d='M744 740H766M755 729V751' stroke='#555' stroke-width='3'/><rect x='632' y='137' width='56' height='36' rx='4' fill='#eef0f2' stroke='#cdd2d7'/><rect x='626' y='722' width='68' height='36' rx='4' fill='#eef0f2' stroke='#cdd2d7'/><text x='660' y='164' font-family='Arial' font-size='22' fill='#9aa1a8' text-anchor='middle'>IN</text><text x='660' y='749' font-family='Arial' font-size='22' fill='#9aa1a8' text-anchor='middle'>OUT</text><text x='565' y='698' font-family='Arial' font-size='20' fill='#9aa1a8' text-anchor='middle'>N</text><text x='755' y='698' font-family='Arial' font-size='20' fill='#9aa1a8' text-anchor='middle'>L</text><rect x='482' y='215' width='356' height='430' rx='8' fill='url(#stfc)' stroke='#c3c9cf'/><text x='500' y='253' font-family='Arial' font-size='21' fill='#d6231f' font-weight='900'>SINOTIMER</text><text x='630' y='252' font-family='Arial' font-size='13' fill='#5a636c' >WiFi-Smart Meter&amp;Energy Protector</text><text transform='translate(492,337) rotate(90)' font-family='Arial' font-weight='700' font-size='13' fill='#3d454d'>SVP-688W</text><text x='486' y='490' font-family='Arial' font-size='15' fill='#3d454d' font-weight='700'>CE</text><rect x='506' y='299' width='308' height='192' rx='6' fill='#8b9198'/><rect x='512' y='305' width='296' height='180' rx='3' fill='#050608'/><g transform='translate(524,357) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='46' fill='#2a1010' letter-spacing='2'>8888</text></g><g transform='translate(672,357) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='50' fill='#2a1010' letter-spacing='2'>888</text></g><g transform='translate(534,415) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='44' fill='#121a36' letter-spacing='2'>888</text></g><g transform='translate(672,415) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='40' fill='#0f240f' letter-spacing='2'>888</text></g><g transform='translate(524,468) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='44' fill='#0f240f' letter-spacing='2'>888</text></g><g transform='translate(672,468) skewX(-6)'><text font-family='Consolas,monospace' font-weight='700' font-size='44' fill='#0f240f' letter-spacing='2'>888</text></g><text x='774' y='377' font-family='Arial' font-size='14' fill='#ff3b30' font-weight='700'>KW/h</text><text x='642' y='415' font-family='Arial' font-size='14' fill='#6f8cff' >V</text><text x='642' y='470' font-family='Arial' font-size='14' fill='#5fdc5f' >A</text><text x='774' y='417' font-family='Arial' font-size='14' fill='#5fdc5f' >mA</text><rect x='818' y='375' width='18' height='44' rx='3' fill='none' stroke='#7a828a'/><text x='522' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>PULSE</text><circle cx='522' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='590' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>WIFI</text><circle cx='590' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='658' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>V</text><circle cx='658' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='726' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>A</text><circle cx='726' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><text x='794' y='535' font-family='Arial' font-size='12' fill='#4a535c' text-anchor='middle'>LEAKAGE</text><circle cx='794' cy='553' r='8' fill='#9aa1a8' stroke='#6b737b'/><rect x='508' y='575' width='62' height='54' rx='8' fill='#f2f3f5' stroke='#c6ccd2'/><rect x='584' y='575' width='62' height='54' rx='8' fill='#f2f3f5' stroke='#c6ccd2'/><rect x='660' y='575' width='62' height='54' rx='8' fill='#f2f3f5' stroke='#c6ccd2'/><text x='539' y='610' font-family='Arial' font-size='17' fill='#2c5bd6' text-anchor='middle' font-weight='900'>SET</text><path d='M615 589l13 22h-26z' fill='#1e9aa6'/><text x='691' y='598' font-family='Arial' font-size='14' fill='#2c5bd6' text-anchor='middle' font-weight='900'>WIFI</text><path d='M691 621l-11-14h22z' fill='#1e9aa6'/><rect x='736' y='575' width='62' height='54' rx='8' fill='#e5302b' stroke='#b81f1b'/><path d='M758 593a14 14 0 1 0 20 0M768 587V603' fill='none' stroke='#fff' stroke-width='4' stroke-linecap='round'/>`;
+function sinoSVG(p,vb,extra){extra=extra||{};
+ const L=(id,x,y,sz,c,t)=>`<g transform="translate(${x},${y}) skewX(-6)"><text id="${p}${id}" text-anchor="middle" dominant-baseline="central" font-family="Consolas,'Courier New',monospace" font-weight="700" font-size="${sz}" fill="${c}" letter-spacing="2" style="filter:drop-shadow(0 0 5px ${c})">${t}</text></g>`;
+ const leds=[522,590,658,726,794].map((x,i)=>`<circle id="${p}led${i}" cx="${x}" cy="553" r="8" fill="#9aa1a8"/>`).join('');
+ const w=(d,c)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="16" opacity=".22" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="7" stroke-linecap="round"/>`;
+ return `<svg viewBox="${vb||'440 40 440 820'}" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Releul Sinotimer SVP-688W">${extra.under||''}${SINO_STATIC.replaceAll("id='st","id='"+p+"st").replaceAll('url(#st','url(#'+p+'st')}
+ ${extra.nowires?'':w('M565 '+(extra.top??40)+' V129','#2f6bff')+w('M755 '+(extra.top??40)+' V129','#ff3b30')+w('M565 766 V'+(extra.bot??860),'#2f6bff')+w('M755 766 V'+(extra.bot??860),'#ff3b30')}${(extra.paths||[]).map(([d,c])=>w(d,c)).join('')}
+ ${L('kwh',724,341,46,'#ff3b30','0.0')}${L('v',582,401,42,'#6f8cff','230')}${L('ma',724,401,40,'#5fdc5f','0')}${L('a',578,454,40,'#5fdc5f','0.00')}${L('st',724,453,40,'#5fdc5f',' ON')}
+ ${leds}<rect id="${p}pw" x="736" y="575" width="62" height="54" rx="8" fill="none" stroke="#ff5a3c" stroke-width="3" style="filter:drop-shadow(0 0 8px rgba(255,80,60,.9))"/><rect id="${p}btn" x="736" y="575" width="62" height="54" fill="transparent" style="cursor:pointer"/>${extra.over||''}</svg>`;}
+function sinoSet(p,o){const g=id=>document.getElementById(p+id);if(!g('v'))return;
+ g('kwh').textContent=o.kwh.toFixed(1);g('v').textContent=Math.round(o.v);g('ma').textContent=Math.round(o.ma);g('a').textContent=o.a.toFixed(2);g('st').textContent=o.on?' ON':'OFF';g('st').setAttribute('fill',o.on?'#5fdc5f':'#ff3b30');
+ const L=[[o.p>0,'#ff3b30'],[true,'#ff3b30'],[o.v>0,'#ff3b30'],[o.a>0,'#4c7dff'],[o.ma>0||o.fault,'#ff3b30']];
+ L.forEach(([on,c],i)=>{const e=g('led'+i);e.setAttribute('fill',on?c:'#9aa1a8');e.style.filter=on?`drop-shadow(0 0 6px ${c})`:'none';});
+ g('pw').style.display=o.on?'':'none';}
+
+const $=id=>document.getElementById(id);
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('active',s.id===b.dataset.t));window.scrollTo(0,0);});
+const f=(x,d)=>Number(x).toFixed(d).replace('.',',');
+
+/* ---- codare / decodare DP6 ---- */
+function enc(V,I,P){const v=Math.round(V*10),i=Math.round(I*1000),p=Math.round(P*10000);
+  const b=[v>>8&255,v&255,i>>16&255,i>>8&255,i&255,p>>16&255,p>>8&255,p&255];
+  return {b,b64:btoa(String.fromCharCode(...b))};}
+function dec(s){const r=atob(s.trim());if(r.length!==8)throw new Error('Pachetul are '+r.length+' octeți; trebuie 8.');
+  const b=[...r].map(c=>c.charCodeAt(0));
+  return {b,V:(b[0]*256+b[1])/10,I:(b[2]*65536+b[3]*256+b[4])/1000,P:(b[5]*65536+b[6]*256+b[7])/10000};}
+const hex=b=>b.map(x=>x.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+
+
+/* ---- desenul aparatului (același ca în dashboardul HA) ---- */
+const box=(x,y,w,h,f,s,t1,t2,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="${f}" stroke="${s}" stroke-width="2"/><text x="${x+w/2}" y="${y+h/2-6}" text-anchor="middle" font-size="30" font-weight="700" fill="${c||'#0b2f4a'}">${t1}</text><text x="${x+w/2}" y="${y+h/2+30}" text-anchor="middle" font-size="22" fill="#5b6b7b">${t2}</text>`;
+$('schemaDev').innerHTML=sinoSVG('h','0 30 1600 850',{nowires:true,
+ paths:[['M340 345 H395 V84 H755 V129','#ff3b30'],['M340 375 H420 V97 H565 V129','#2f6bff'],['M755 766 V800 H1100 V650 H1180','#ff3b30'],['M565 766 V840 H1130 V720 H1180','#2f6bff']],
+ under:box(40,270,300,180,'#e0f4f4','#00838f','Rețea','230 V / 50 Hz')+box(1180,580,300,190,'#fff4e0','#d97706','Sarcină','R / L / mixtă')+box(1180,150,330,150,'#0b2f4a','#0b2f4a','Home Assistant','LocalTuya · TCP 6668','#fff')
+  +'<path d="M850 300 H1100 V225 H1170" fill="none" stroke="#0b2f4a" stroke-width="3" stroke-dasharray="10 8"/><path d="M1162 215l14 10-14 10z" fill="#0b2f4a"/><text x="1000" y="288" font-size="22" fill="#5b6b7b" text-anchor="middle">Wi-Fi (LAN, fără cloud)</text>'
+  +'<text x="368" y="335" font-size="24" font-weight="700" fill="#ff3b30">L</text><text x="368" y="408" font-size="24" font-weight="700" fill="#2f6bff">N</text>'
+  +'<text x="880" y="420" font-size="20" fill="#d97706">tor diferențial ΔI = I_L − I_N</text><path d="M876 412 H845" stroke="#d97706" stroke-width="2"/>'});
+sinoSet('h',{kwh:0,v:225,ma:0,a:0.02,on:true,p:0});
+$('simDev').innerHTML=sinoSVG('s','440 30 440 840');
+
+/* ---- simulator ---- */
+const FAULTS=['short_circuit_alarm','surge_alarm','overload_alarm','leakagecurr_alarm','temp_dif_fault','fire_alarm','high_power_alarm','self_test_alarm'];
+let on=true,E=0,fault=0,last=Date.now();
+function sim(){
+  const V=+$('sV').value,I=on?+$('sI').value:0,pf=+$('sPF').value,L=on?+$('sL').value:0,th=+$('sTh').value;
+  $('sVv').textContent=f(V,1);$('sIv').textContent=f(+$('sI').value,3);$('sPFv').textContent=f(pf,2);$('sLv').textContent=f(+$('sL').value,1);
+  if(on&&L>=th){on=false;fault|=1<<3;$('sMsg').innerHTML='<b style="color:#b42318">Declanșare:</b> ΔI = '+f(L,1)+' mA ≥ IΔn = '+th+' mA. Bitul 3 (leakagecurr_alarm) devine 1.';return sim();}
+  const P=V*I*pf/1000,S=V*I,Q=Math.sqrt(Math.max(S*S-(P*1000)**2,0));
+  sinoSet('s',{kwh:E,v:V,ma:L,a:I,on,p:P,fault});
+  $('sCalc').innerHTML=`<tr><th>S = V·I</th><td>${f(S,1)} VA</td></tr><tr><th>P</th><td>${f(P*1000,1)} W</td></tr><tr><th>λ = P/S</th><td>${S>0?f(P*1000/S,3):'–'}</td></tr><tr><th>Q</th><td>${f(Q,1)} var</td></tr><tr><th>Banda EN 50160</th><td>${V>=207&&V<=253?'<span class="tag go">în 230 V ± 10 %</span>':'<span class="tag wait">în afara benzii</span>'}</td></tr><tr><th>R<sub>f</sub> = V/ΔI</th><td>${+$('sL').value>0?f(V/+$('sL').value,2)+' kΩ':'–'}</td></tr>`;
+  const e=enc(V,I,P);$('sRaw').textContent=e.b64;$('sHex').textContent=hex(e.b);
+  $('sFault').textContent='valoare = '+fault+'\n'+FAULTS.map((n,i)=>'bit '+i+' '+n+' = '+(fault>>i&1)).join('\n');
+}
+['sV','sI','sPF','sL','sTh'].forEach(i=>$(i).oninput=sim);
+$('sTest').onclick=()=>{if(!on){$('sMsg').textContent='Releul este deja deschis.';return;}on=false;fault|=1<<7;$('sMsg').innerHTML='<b>TEST:</b> dezechilibru creat intenționat, releul a declanșat (bitul 7 self_test_alarm).';sim();};
+$('sReset').onclick=()=>{if(+$('sL').value>=+$('sTh').value){$('sMsg').textContent='Defectul persistă (ΔI ≥ IΔn): reanclanșarea nu ține. Reduceți ΔI.';return;}on=true;fault=0;$('sMsg').textContent='Releu reanclanșat, alarme șterse.';sim();};
+setInterval(()=>{const now=Date.now();if(on)E+=(+$('sV').value*+$('sI').value*+$('sPF').value/1000)*((now-last)/3.6e6)*60;last=now;sim();},1000);
+
+/* ---- decodor ---- */
+function doDec(){try{const d=dec($('dIn').value);$('dMsg').textContent='';
+  $('dTab').innerHTML=`<tr><th>Octeți (hex)</th><td colspan="3"><code class="k">${hex(d.b)}</code></td></tr>
+  <tr><th>Mărime</th><th>Octeți</th><th>Întreg</th><th>Valoare</th></tr>
+  <tr><td>Tensiune</td><td>${hex(d.b.slice(0,2))}</td><td>${d.V*10}</td><td><b>${f(d.V,1)} V</b></td></tr>
+  <tr><td>Curent</td><td>${hex(d.b.slice(2,5))}</td><td>${Math.round(d.I*1000)}</td><td><b>${f(d.I,3)} A</b></td></tr>
+  <tr><td>Putere activă</td><td>${hex(d.b.slice(5,8))}</td><td>${Math.round(d.P*10000)}</td><td><b>${f(d.P,4)} kW = ${f(d.P*1000,1)} W</b></td></tr>
+  <tr><td>S = V·I</td><td colspan="2">calculat</td><td>${f(d.V*d.I,2)} VA${d.V*d.I>0?' · λ = '+f(d.P*1000/(d.V*d.I),3):''}</td></tr>`;
+}catch(e){$('dMsg').textContent='Eroare: '+e.message;$('dTab').innerHTML='';}}
+$('dGo').onclick=doDec;$('dEx').onclick=()=>{$('dIn').value='CMoAABUAAAA=';doDec();};
+$('eGo').onclick=()=>{const p=s=>+String(s).replace(',','.');const e=enc(p($('eV').value),p($('eI').value),p($('eP').value));$('eOut').textContent=e.b64+'\n'+hex(e.b);};
+
+/* ---- cronometru ---- */
+let t0=0,runs=[];
+$('cStart').onclick=()=>{t0=performance.now();$('cMsg').textContent='Cronometru pornit…';};
+$('cStop').onclick=()=>{if(!t0)return;const t=performance.now()-t0;t0=0;runs.push({p:$('cPath').value,t});
+  $('cMsg').textContent='Înregistrat: '+Math.round(t)+' ms';
+  $('cTab').innerHTML='<tr><th>#</th><th>Drum</th><th>t [ms]</th></tr>'+runs.map((r,i)=>`<tr><td>${i+1}</td><td>${r.p}</td><td>${Math.round(r.t)}</td></tr>`).join('');
+  const st=p=>{const a=runs.filter(r=>r.p===p).map(r=>r.t);if(!a.length)return '–';const m=a.reduce((x,y)=>x+y)/a.length;const s=Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/Math.max(a.length-1,1));return `n = ${a.length}, medie ${Math.round(m)} ms, abatere ${Math.round(s)} ms`;};
+  $('cStat').innerHTML=`<p><b>Local:</b> ${st('local')}<br><b>Cloud:</b> ${st('cloud')}</p><p style="font-size:13px;color:#5b6b7b">Cronometrul manual include timpul de reacție al omului (aprox. 0,2 s). Comparați diferența dintre drumuri, nu valorile absolute.</p>`;};
+
+/* ---- varianta N ---- */
+function variant(){const N=Math.max(1,parseInt($('vN').value)||1);
+  const V=222+(N*7%17),PR=60+10*(N%10),IR=PR/V,SI=100+4*N,pfI=0.55+0.01*(N%30),IS=0.010+0.001*(N%20),dI=5+(N*3%46);
+  const e=enc(V,IR,PR/1000);
+  $('vTab').innerHTML=`<tr><th colspan="3">Varianta N = ${N}</th></tr>
+  <tr><td>Tensiunea rețelei</td><td>V = ${f(V,1)} V</td><td>B, C, D</td></tr>
+  <tr><td>Sarcina rezistivă</td><td>P = ${PR} W (λ = 1) → I = ${f(IR,3)} A</td><td>A, D: codați pachetul DP 6</td></tr>
+  <tr><td>Sarcina inductivă</td><td>S = ${SI} VA, λ = ${f(pfI,2)}</td><td>B: P, Q, I</td></tr>
+  <tr><td>Sarcina mică</td><td>I = ${f(IS,3)} A, λ = 0,90</td><td>B: eroarea lui λ din rezoluție</td></tr>
+  <tr><td>Curentul de scurgere</td><td>ΔI = ${dI} mA</td><td>C: R<sub>f</sub> și declanșare la 30 mA</td></tr>
+  <tr><td colspan="3" style="font-size:13px;color:#5b6b7b">Verificare pentru cadrul didactic (pachetul sarcinii rezistive): <code class="k">${e.b64}</code></td></tr>`;}
+$('vGo').onclick=variant;
+
+/* ---- fișa ---- */
+function addRow(){const tr=document.createElement('tr');tr.innerHTML='<td><input></td>'+'<td><input class="n"></td>'.repeat(3)+'<td class="o"></td>'.repeat(3);$('fTab').appendChild(tr);
+  tr.querySelectorAll('input.n').forEach(i=>i.oninput=()=>{const [V,I,P]=[...tr.querySelectorAll('input.n')].map(x=>+x.value.replace(',','.'));const o=tr.querySelectorAll('td.o');
+    if(V&&I){const S=V*I,Pw=P*1000;o[0].textContent=f(S,1);o[1].textContent=f(Pw/S,3);o[2].textContent=f(Math.sqrt(Math.max(S*S-Pw*Pw,0)),1);}});}
+['rezistivă','inductivă','mică'].forEach(n=>{addRow();$('fTab').lastChild.querySelector('input').value='Sarcina '+n;});
+$('fAdd').onclick=addRow;
+$('fUGo').onclick=()=>{const a=$('fU').value.split(/[\s,;]+/).map(x=>+x).filter(x=>x>50&&x<400);if(!a.length){$('fUOut').textContent='Nu am găsit valori de tensiune.';return;}
+  const m=a.reduce((x,y)=>x+y)/a.length,inb=a.filter(x=>x>=207&&x<=253).length;
+  $('fUOut').innerHTML=`<table><tr><th>n</th><td>${a.length}</td><th>medie</th><td>${f(m,2)} V</td></tr><tr><th>min</th><td>${f(Math.min(...a),1)} V</td><th>max</th><td>${f(Math.max(...a),1)} V</td></tr><tr><th>în 230 V ± 10 %</th><td colspan="3">${f(100*inb/a.length,1)} % ${inb/a.length>=0.95?'<span class="tag go">≥ 95 %</span>':'<span class="tag wait">&lt; 95 %</span>'}</td></tr></table>`;};
+
+$('sbtn').onclick=()=>{if(on){on=false;$('sMsg').textContent='Releu oprit de la butonul de pe aparat.';sim();}else $('sReset').onclick();};
+sim();doDec();variant();
+
+</script>
+<div id="licenta-cc-by-nc-nd" style="clear:both;margin:24px auto 12px;padding:8px 12px;max-width:1100px;font:12px/1.5 system-ui,Arial,sans-serif;color:#666;text-align:center;opacity:.9">© 2026 Florin-Ciprian Argatu, Felix-Constantin Adochiei · ConectLab EB104 · UPB · Licență <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license" style="color:inherit">CC BY-NC-ND 4.0</a> · Utilizare necomercială, fără versiuni modificate, cu citarea autorului.</div>
+</body></html>
